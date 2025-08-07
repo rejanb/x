@@ -1,0 +1,110 @@
+.tweet-detail-page {
+  min-height: 100vh;
+  background-color: #ffffff;
+  margin: 0 auto;
+  border-left: 1px solid #e1e8ed;
+  border-right: 1px solid #e1e8ed;
+}
+
+.tweet-detail-header {
+  position: sticky;
+  top: 0;
+  background-color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid #e1e8ed;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  z-index: 10;
+}
+
+.back-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: none;
+  border: none;
+  color: #14171a;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.back-button:hover {
+  background-color: rgba(15, 20, 25, 0.1);
+}
+
+.tweet-detail-header h1 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #14171a;
+  margin: 0;
+}
+
+.tweet-detail-content {
+  background-color: #ffffff;
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 20px;
+}
+
+.loading-spinner {
+  font-size: 16px;
+  color: #657786;
+}
+
+.tweet-not-found {
+  text-align: center;
+  padding: 60px 20px;
+  color: #657786;
+}
+
+.tweet-not-found h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #14171a;
+  margin-bottom: 8px;
+}
+
+.tweet-not-found p {
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.comment-section {
+  border-top: 1px solid #e1e8ed;
+  background-color: #ffffff;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .tweet-detail-page {
+    border-left: none;
+    border-right: none;
+  }
+
+  .tweet-detail-header {
+    padding: 12px 16px;
+  }
+
+  .tweet-detail-header h1 {
+    font-size: 18px;
+  }
+
+  .back-button {
+    width: 32px;
+    height: 32px;
+  }
+
+  .loading-container,
+  .tweet-not-found {
+    padding: 40px 16px;
+  }
+}
