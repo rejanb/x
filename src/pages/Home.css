@@ -1,0 +1,50 @@
+.home-page {
+  min-height: 100vh;
+  background-color: #ffffff;
+}
+
+.home-header {
+  position: sticky;
+  top: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid #e1e8ed;
+  padding: 16px 20px;
+  z-index: 10;
+}
+
+.home-header h1 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #14171a;
+}
+
+.tweet-feed {
+  min-height: 200px;
+  background-color: #ffffff;
+}
+
+.loading-spinner {
+  text-align: center;
+  padding: 40px;
+  color: #657786;
+  font-size: 16px;
+}
+
+.empty-feed {
+  text-align: center;
+  padding: 60px 20px;
+  color: #657786;
+  background-color: #ffffff;
+}
+
+.empty-feed h3 {
+  font-size: 24px;
+  margin-bottom: 12px;
+  color: #14171a;
+}
+
+.empty-feed p {
+  font-size: 16px;
+  line-height: 1.5;
+}
