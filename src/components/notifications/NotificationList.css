@@ -1,0 +1,51 @@
+.notification-list {
+  display: flex;
+  flex-direction: column;
+  background-color: #ffffff;
+}
+
+.empty-notifications {
+  text-align: center;
+  padding: 60px 20px;
+  color: #657786;
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-notifications h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #14171a;
+  margin-bottom: 8px;
+}
+
+.empty-notifications p {
+  font-size: 15px;
+  line-height: 1.4;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .empty-notifications {
+    padding: 40px 16px;
+  }
+
+  .empty-icon {
+    font-size: 40px;
+    margin-bottom: 12px;
+  }
+
+  .empty-notifications h3 {
+    font-size: 18px;
+  }
+
+  .empty-notifications p {
+    font-size: 14px;
+  }
+}

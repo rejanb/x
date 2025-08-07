@@ -1,0 +1,73 @@
+.notifications-page {
+  min-height: 100vh;
+  background-color: #ffffff;
+}
+
+.notifications-header {
+  position: sticky;
+  top: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid #e1e8ed;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 10;
+}
+
+.notifications-header h1 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #14171a;
+  margin: 0;
+}
+
+.mark-all-read-btn {
+  background: none;
+  border: none;
+  color: #1d9bf0;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.mark-all-read-btn:hover {
+  background-color: rgba(29, 155, 240, 0.1);
+}
+
+.notifications-content {
+  background-color: #ffffff;
+  min-height: 400px;
+}
+
+.loading-notifications {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 20px;
+}
+
+.loading-spinner {
+  font-size: 16px;
+  color: #657786;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .notifications-header {
+    padding: 12px 16px;
+  }
+
+  .notifications-header h1 {
+    font-size: 18px;
+  }
+
+  .mark-all-read-btn {
+    font-size: 13px;
+    padding: 6px 10px;
+  }
+}
