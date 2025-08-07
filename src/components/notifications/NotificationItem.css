@@ -1,0 +1,181 @@
+.notification-item {
+  position: relative;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e1e8ed;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-color: #ffffff;
+}
+
+.notification-item:hover {
+  background-color: #f7f9fa;
+}
+
+.notification-item.unread {
+  background-color: #f0f8ff;
+}
+
+.notification-item.unread:hover {
+  background-color: #e6f3ff;
+}
+
+.notification-layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.notification-icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.like-icon {
+  background-color: #f91880;
+  color: #ffffff;
+}
+
+.retweet-icon {
+  background-color: #00ba7c;
+  color: #ffffff;
+}
+
+.follow-icon {
+  background-color: #1d9bf0;
+  color: #ffffff;
+}
+
+.mention-icon {
+  background-color: #1d9bf0;
+  color: #ffffff;
+}
+
+.notification-avatar {
+  flex-shrink: 0;
+}
+
+.notification-avatar .avatar-placeholder {
+  width: 40px;
+  height: 40px;
+}
+
+.notification-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.notification-content {
+  margin-bottom: 4px;
+}
+
+.notification-text {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.user-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #14171a;
+}
+
+.verified {
+  color: #1d9bf0;
+  display: flex;
+  align-items: center;
+}
+
+.notification-action {
+  font-size: 15px;
+  color: #14171a;
+}
+
+.tweet-preview {
+  background-color: #f7f9fa;
+  border: 1px solid #e1e8ed;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 8px;
+  font-size: 14px;
+  color: #14171a;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.notification-time {
+  font-size: 13px;
+  color: #657786;
+  margin-top: 4px;
+}
+
+.unread-indicator {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 8px;
+  height: 8px;
+  background-color: #1d9bf0;
+  border-radius: 50%;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .notification-item {
+    padding: 12px 16px;
+  }
+
+  .notification-layout {
+    gap: 10px;
+  }
+
+  .notification-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .notification-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .notification-avatar .avatar-placeholder {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+  }
+
+  .user-name,
+  .notification-action {
+    font-size: 14px;
+  }
+
+  .tweet-preview {
+    padding: 10px;
+    font-size: 13px;
+  }
+
+  .notification-time {
+    font-size: 12px;
+  }
+
+  .unread-indicator {
+    top: 16px;
+    right: 16px;
+    width: 6px;
+    height: 6px;
+  }
+}
