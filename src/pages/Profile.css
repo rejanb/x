@@ -1,0 +1,139 @@
+.profile-page {
+  min-height: 100vh;
+  background-color: #ffffff;
+}
+
+.profile-header {
+  position: relative;
+  border-bottom: 1px solid #e1e8ed;
+}
+
+.profile-cover {
+  height: 200px;
+  background: linear-gradient(135deg, #1d9bf0, #657786);
+  position: relative;
+}
+
+.profile-info {
+  padding: 16px 20px;
+  position: relative;
+  background-color: #ffffff;
+}
+
+.profile-avatar {
+  position: absolute;
+  top: -40px;
+  left: 20px;
+}
+
+.profile-avatar img,
+.profile-avatar .avatar-placeholder {
+  width: 80px;
+  height: 80px;
+  border: 4px solid #ffffff;
+  border-radius: 50%;
+}
+
+.profile-details {
+  margin-top: 50px;
+  margin-bottom: 20px;
+}
+
+.profile-details h1 {
+  font-size: 24px;
+  font-weight: 800;
+  color: #14171a;
+  margin-bottom: 4px;
+}
+
+.profile-details .username {
+  font-size: 15px;
+  color: #657786;
+  margin-bottom: 16px;
+}
+
+.profile-stats {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 16px;
+}
+
+.stat {
+  display: flex;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.stat:hover .stat-label {
+  text-decoration: underline;
+}
+
+.stat-number {
+  font-weight: 700;
+  color: #14171a;
+}
+
+.stat-label {
+  color: #657786;
+}
+
+.edit-profile-button {
+  background-color: transparent;
+  color: #14171a;
+  border: 1px solid #e1e8ed;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 15px;
+  font-weight: 700;
+  transition: background-color 0.2s ease;
+}
+
+.edit-profile-button:hover {
+  background-color: #f7f9fa;
+}
+
+.profile-tabs {
+  display: flex;
+  border-bottom: 1px solid #e1e8ed;
+  background-color: #ffffff;
+}
+
+.tab {
+  flex: 1;
+  text-align: center;
+  padding: 16px;
+  color: #657786;
+  cursor: pointer;
+  font-weight: 500;
+  position: relative;
+  transition: color 0.2s ease;
+}
+
+.tab:hover {
+  background-color: #f7f9fa;
+}
+
+.tab.active {
+  color: #14171a;
+  font-weight: 700;
+}
+
+.tab.active::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 4px;
+  background-color: #1d9bf0;
+  border-radius: 2px;
+}
+
+.profile-content {
+  padding: 40px 20px;
+  text-align: center;
+  color: #657786;
+  font-size: 16px;
+  background-color: #ffffff;
+}
