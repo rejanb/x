@@ -1,0 +1,161 @@
+.explore-page {
+  min-height: 100vh;
+  background-color: #ffffff;
+}
+
+.explore-header {
+  position: sticky;
+  top: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid #e1e8ed;
+  padding: 12px 20px;
+  z-index: 10;
+}
+
+.explore-tabs {
+  display: flex;
+  border-bottom: 1px solid #e1e8ed;
+  background-color: #ffffff;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.explore-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tab-button {
+  flex: 1;
+  padding: 16px 20px;
+  background: none;
+  border: none;
+  font-size: 15px;
+  font-weight: 500;
+  color: #657786;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 2px solid transparent;
+  min-width: fit-content;
+  white-space: nowrap;
+}
+
+.tab-button:hover {
+  background-color: #f7f9fa;
+  color: #14171a;
+}
+
+.tab-button.active {
+  color: #1d9bf0;
+  border-bottom-color: #1d9bf0;
+  font-weight: 600;
+}
+
+.explore-content {
+  background-color: #ffffff;
+  min-height: 500px;
+}
+
+/* Search Results */
+.search-results {
+  padding: 20px;
+}
+
+.search-results h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #14171a;
+  margin-bottom: 20px;
+}
+
+.results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.search-result-item {
+  padding: 12px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.search-result-item:hover {
+  background-color: #f7f9fa;
+}
+
+.user-result {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-info {
+  flex: 1;
+}
+
+.display-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #14171a;
+  display: flex;
+  align-items: center;
+}
+
+.username {
+  font-size: 14px;
+  color: #657786;
+  margin-top: 2px;
+}
+
+.hashtag-result,
+.topic-result {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hashtag-name,
+.topic-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1d9bf0;
+}
+
+.hashtag-count,
+.topic-category {
+  font-size: 13px;
+  color: #657786;
+}
+
+.no-results {
+  text-align: center;
+  padding: 40px 20px;
+  color: #657786;
+}
+
+.no-results p {
+  font-size: 16px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .explore-header {
+    padding: 12px 16px;
+  }
+
+  .tab-button {
+    padding: 16px 12px;
+    font-size: 14px;
+  }
+
+  .search-results {
+    padding: 16px;
+  }
+
+  .search-result-item {
+    padding: 12px;
+  }
+}
