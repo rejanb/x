@@ -1,0 +1,36 @@
+.hashtag-text {
+  line-height: inherit;
+  word-wrap: break-word;
+}
+
+.hashtag-link {
+  color: #1d9bf0;
+  cursor: pointer;
+  text-decoration: none;
+  font-weight: 400;
+  transition: all 0.2s ease;
+}
+
+.hashtag-link:hover {
+  text-decoration: underline;
+  color: #1a8cd8;
+}
+
+.hashtag-link:focus {
+  outline: 2px solid rgba(29, 155, 240, 0.3);
+  outline-offset: 1px;
+  border-radius: 2px;
+}
+
+/* Ensure hashtags maintain proper spacing */
+.hashtag-text span {
+  white-space: pre-wrap;
+}
+
+/* Mobile optimization */
+@media (max-width: 768px) {
+  .hashtag-link {
+    font-size: inherit;
+    line-height: inherit;
+  }
+}

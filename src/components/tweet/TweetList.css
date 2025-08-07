@@ -1,0 +1,23 @@
+.tweet-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.empty-feed {
+  text-align: center;
+  padding: 60px 20px;
+  color: #657786;
+  background-color: #ffffff;
+}
+
+.empty-feed h3 {
+  font-size: 24px;
+  margin-bottom: 12px;
+  color: #14171a;
+}
+
+.empty-feed p {
+  font-size: 16px;
+  line-height: 1.5;
+  color: #657786;
+}
