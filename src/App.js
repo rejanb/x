@@ -8,7 +8,7 @@ import {
 import { AuthProvider } from "./context/AuthContext";
 import { TweetProvider } from "./context/TweetContext";
 import PublicRoute from "./components/common/PublicRoute";
-import PrivateRoute from "./components/common/PrivateRoute";
+import KeycloakPrivateRoute from "./components/common/KeycloakPrivateRoute";
 import Layout from "./components/common/Layout";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -34,8 +34,8 @@ function App() {
                 <Route path="/register" element={<Register />} />
               </Route>
 
-              {/* Private Routes */}
-              <Route element={<PrivateRoute />}>
+              {/* Private Routes protected by Keycloak */}
+              <Route element={<KeycloakPrivateRoute />}>
                 <Route element={<Layout />}>
                   <Route path="/home" element={<Home />} />
                   <Route path="/profile" element={<Profile />} />

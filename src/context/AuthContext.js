@@ -102,26 +102,34 @@ export const AuthProvider = ({ children }) => {
   const login = async (credentials) => {
     dispatch({ type: AUTH_ACTIONS.LOGIN_START });
 
+    const KEYCLOAK_URL = 'http://localhost:8080/realms/twitter-clone/protocol/openid-connect/token';
+    const CLIENT_ID = 'twitter-backend';
+
+    const params = new URLSearchParams();
+  params.append('grant_type', 'password');
+  params.append('client_id', CLIENT_ID);
+  params.append('client_secret', 'EUfu1au8HcNP7lIHQnxY4OrzBLwNESTQ');
+  params.append('username', credentials.username);
+  params.append('password', credentials.password);
+
     try {
-      // Replace with your actual API call
-      // const response = await authService.login(credentials);
-
-      // Mock response for now
-      const mockUser = {
-        id: 1,
-        username: credentials.username,
-        email: credentials.email || `${credentials.username}@example.com`,
-        profilePicture: null,
-        followers: 0,
-        following: 0,
-      };
-
-      localStorage.setItem("token", "mock-token");
-      localStorage.setItem("user", JSON.stringify(mockUser));
-
-      dispatch({ type: AUTH_ACTIONS.LOGIN_SUCCESS, payload: mockUser });
-
-      return { success: true };
+      const response = await fetch(KEYCLOAK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params,
+      });
+      const data = await response.json();
+      if (data.access_token) {
+        // Optionally decode the token to get user info
+        const user = { username: credentials.username };
+        localStorage.setItem('token', data.access_token);
+        localStorage.setItem('user', JSON.stringify(user));
+        dispatch({ type: AUTH_ACTIONS.LOGIN_SUCCESS, payload: user });
+        return { success: true };
+      } else {
+        dispatch({ type: AUTH_ACTIONS.LOGIN_FAILURE, payload: 'Invalid credentials' });
+        return { success: false, error: 'Invalid credentials' };
+      }
     } catch (error) {
       dispatch({ type: AUTH_ACTIONS.LOGIN_FAILURE, payload: error.message });
       return { success: false, error: error.message };
@@ -132,6 +140,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     dispatch({ type: AUTH_ACTIONS.LOGOUT });
+    window.location.href = "/login";
   };
 
   const updateUser = (userData) => {
