@@ -116,13 +116,41 @@ export const AuthProvider = ({ children }) => {
         following: 0,
       };
 
+      const user = {
+        username: response.username,
+        email: response.email,
+      };
+
       localStorage.setItem("token", response.access_token);
-      localStorage.setItem("user", JSON.stringify(response?.user || mockUser));
+      localStorage.setItem("user", JSON.stringify(user));
 
       dispatch({
         type: AUTH_ACTIONS.LOGIN_SUCCESS,
-        payload: response?.user || mockUser,
+        payload: user,
       });
+
+      return { success: true };
+    } catch (error) {
+      dispatch({ type: AUTH_ACTIONS.LOGIN_FAILURE, payload: error.message });
+      return { success: false, error: error.message };
+    }
+  };
+
+  // register user
+  const register = async (userData) => {
+    dispatch({ type: AUTH_ACTIONS.LOGIN_START });
+
+    try {
+      const response = await authAPI.register(userData);
+
+      localStorage.setItem("token", response.access_token);
+      const user = {
+        username: response.username,
+        email: response.email,
+      };
+      localStorage.setItem("user", JSON.stringify(user));
+
+      dispatch({ type: AUTH_ACTIONS.LOGIN_SUCCESS, payload: user });
 
       return { success: true };
     } catch (error) {
@@ -146,6 +174,7 @@ export const AuthProvider = ({ children }) => {
   const value = {
     ...state,
     login,
+    register,
     logout,
     updateUser,
     AUTH_ACTIONS,
@@ -164,4 +193,3 @@ export const useAuth = () => {
 };
 
 export default AuthContext;
-
