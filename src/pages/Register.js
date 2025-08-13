@@ -15,7 +15,7 @@ const Register = () => {
     resolver: yupResolver(registerSchema),
   });
 
-  const { login } = useAuth();
+  const { register: registerUser } = useAuth();
   const navigate = useNavigate();
 
   // Add auth-page class to body for light theme
@@ -28,12 +28,7 @@ const Register = () => {
 
   const onSubmit = async (data) => {
     try {
-      // In a real app, you would make an API call to register the user
-      // For now, we'll simulate a successful registration and log them in
-      const result = await login({
-        username: data.username,
-        email: data.email,
-      });
+      const result = await registerUser(data);
 
       if (result.success) {
         navigate("/home");
