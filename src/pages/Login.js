@@ -18,14 +18,6 @@ const Login = () => {
   const { login, error } = useAuth();
   const navigate = useNavigate();
 
-  // Add auth-page class to body for light theme
-  useEffect(() => {
-    document.body.classList.add("auth-page");
-    return () => {
-      document.body.classList.remove("auth-page");
-    };
-  }, []);
-
   const onSubmit = async (data) => {
     const result = await login(data);
 
@@ -46,12 +38,12 @@ const Login = () => {
           <div className="form-group">
             <input
               type="text"
-              placeholder="Username or email"
-              className={`form-input ${errors.username ? "error" : ""}`}
-              {...register("username")}
+              placeholder="Email"
+              className={`form-input ${errors.email ? "error" : ""}`}
+              {...register("email")}
             />
-            {errors.username && (
-              <span className="error-text">{errors.username.message}</span>
+            {errors.email && (
+              <span className="error-text">{errors.email.message}</span>
             )}
           </div>
 
@@ -88,3 +80,4 @@ const Login = () => {
 };
 
 export default Login;
+

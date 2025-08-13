@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect } from "react";
+import { authAPI } from "../services/api";
 
 // Auth Context
 const AuthContext = createContext();
@@ -103,8 +104,7 @@ export const AuthProvider = ({ children }) => {
     dispatch({ type: AUTH_ACTIONS.LOGIN_START });
 
     try {
-      // Replace with your actual API call
-      // const response = await authService.login(credentials);
+      const response = await authAPI.login(credentials);
 
       // Mock response for now
       const mockUser = {
@@ -116,10 +116,13 @@ export const AuthProvider = ({ children }) => {
         following: 0,
       };
 
-      localStorage.setItem("token", "mock-token");
-      localStorage.setItem("user", JSON.stringify(mockUser));
+      localStorage.setItem("token", response.access_token);
+      localStorage.setItem("user", JSON.stringify(response?.user || mockUser));
 
-      dispatch({ type: AUTH_ACTIONS.LOGIN_SUCCESS, payload: mockUser });
+      dispatch({
+        type: AUTH_ACTIONS.LOGIN_SUCCESS,
+        payload: response?.user || mockUser,
+      });
 
       return { success: true };
     } catch (error) {
@@ -161,3 +164,4 @@ export const useAuth = () => {
 };
 
 export default AuthContext;
+
