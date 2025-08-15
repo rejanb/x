@@ -1,0 +1,85 @@
+.edit-profile-container {
+  max-width: 500px;
+  margin: 40px auto;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+  font-family: "Segoe UI", Roboto, sans-serif;
+}
+
+.edit-profile-container h2 {
+  margin-bottom: 20px;
+  font-size: 22px;
+  font-weight: bold;
+  color: #0f1419;
+}
+
+.edit-profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.edit-profile-form label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #536471;
+}
+
+.edit-profile-form input,
+.edit-profile-form textarea,
+.edit-profile-form select {
+  width: 100%;
+  padding: 10px;
+  font-size: 15px;
+  border: 1px solid #cfd9de;
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.edit-profile-form input:focus,
+.edit-profile-form textarea:focus,
+.edit-profile-form select:focus {
+  border-color: #1d9bf0;
+}
+
+.edit-profile-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.cancel-btn {
+  padding: 8px 16px;
+  border: 1px solid #cfd9de;
+  border-radius: 50px;
+  background-color: white;
+  font-size: 15px;
+  font-weight: bold;
+  color: #0f1419;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.cancel-btn:hover {
+  background-color: #f7f9f9;
+}
+
+.save-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 50px;
+  background-color: #1d9bf0;
+  font-size: 15px;
+  font-weight: bold;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.save-btn:hover {
+  background-color: #1a8cd8;
+}
