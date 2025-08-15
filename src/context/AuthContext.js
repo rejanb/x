@@ -20,58 +20,42 @@ const initialState = {
   isAuthenticated: false,
   isLoading: false,
   error: null,
+  token: null, // <-- store JWT here
 };
 
 // Auth reducer
 const authReducer = (state, action) => {
   switch (action.type) {
     case AUTH_ACTIONS.LOGIN_START:
-      return {
-        ...state,
-        isLoading: true,
-        error: null,
-      };
+      return { ...state, isLoading: true, error: null };
 
     case AUTH_ACTIONS.LOGIN_SUCCESS:
       return {
         ...state,
-        user: action.payload,
+        user: action.payload.user,
+        token: action.payload.token,
         isAuthenticated: true,
         isLoading: false,
         error: null,
       };
 
     case AUTH_ACTIONS.LOGIN_FAILURE:
-      return {
-        ...state,
-        user: null,
-        isAuthenticated: false,
-        isLoading: false,
-        error: action.payload,
-      };
+      return { ...state, user: null, token: null, isAuthenticated: false, isLoading: false, error: action.payload };
 
     case AUTH_ACTIONS.LOGOUT:
-      return {
-        ...state,
-        user: null,
-        isAuthenticated: false,
-        isLoading: false,
-        error: null,
-      };
+      return { ...state, user: null, token: null, isAuthenticated: false, isLoading: false, error: null };
 
     case AUTH_ACTIONS.SET_USER:
       return {
         ...state,
-        user: action.payload,
-        isAuthenticated: !!action.payload,
+        user: action.payload.user,
+        token: action.payload.token,
+        isAuthenticated: !!action.payload.user,
         isLoading: false,
       };
 
     case AUTH_ACTIONS.UPDATE_USER:
-      return {
-        ...state,
-        user: { ...state.user, ...action.payload },
-      };
+      return { ...state, user: { ...state.user, ...action.payload } };
 
     default:
       return state;
@@ -90,7 +74,7 @@ export const AuthProvider = ({ children }) => {
     if (token && user) {
       try {
         const parsedUser = JSON.parse(user);
-        dispatch({ type: AUTH_ACTIONS.SET_USER, payload: parsedUser });
+        dispatch({ type: AUTH_ACTIONS.SET_USER, payload: { user: parsedUser, token } });
       } catch (error) {
         console.error("Error parsing user data:", error);
         localStorage.removeItem("token");
@@ -106,29 +90,17 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await authAPI.login(credentials);
 
-      // Mock response for now
-      const mockUser = {
-        id: 1,
-        username: credentials.username,
-        email: credentials.email || `${credentials.username}@example.com`,
-        profilePicture: null,
-        followers: 0,
-        following: 0,
-      };
-
       const user = {
+        id: response.userId,
         username: response.username,
         email: response.email,
-        id:response.userId,
+        profilePicture: null,
       };
 
       localStorage.setItem("token", response.access_token);
       localStorage.setItem("user", JSON.stringify(user));
 
-      dispatch({
-        type: AUTH_ACTIONS.LOGIN_SUCCESS,
-        payload: user,
-      });
+      dispatch({ type: AUTH_ACTIONS.LOGIN_SUCCESS, payload: { user, token: response.access_token } });
 
       return { success: true };
     } catch (error) {
@@ -137,21 +109,21 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // register user
   const register = async (userData) => {
     dispatch({ type: AUTH_ACTIONS.LOGIN_START });
 
     try {
       const response = await authAPI.register(userData);
 
-      localStorage.setItem("token", response.access_token);
       const user = {
         username: response.username,
         email: response.email,
       };
+
+      localStorage.setItem("token", response.access_token);
       localStorage.setItem("user", JSON.stringify(user));
 
-      dispatch({ type: AUTH_ACTIONS.LOGIN_SUCCESS, payload: user });
+      dispatch({ type: AUTH_ACTIONS.LOGIN_SUCCESS, payload: { user, token: response.access_token } });
 
       return { success: true };
     } catch (error) {
@@ -172,24 +144,26 @@ export const AuthProvider = ({ children }) => {
     dispatch({ type: AUTH_ACTIONS.UPDATE_USER, payload: userData });
   };
 
-  const value = {
-    ...state,
-    login,
-    register,
-    logout,
-    updateUser,
-    AUTH_ACTIONS,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider
+      value={{
+        ...state,
+        login,
+        register,
+        logout,
+        updateUser,
+        AUTH_ACTIONS,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 // Custom hook to use auth context
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
+  if (!context) throw new Error("useAuth must be used within an AuthProvider");
   return context;
 };
 
