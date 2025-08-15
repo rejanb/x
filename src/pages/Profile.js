@@ -1,9 +1,32 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import { usersAPI } from "../services/api";
 import "./Profile.css";
 
 const Profile = () => {
   const { user } = useAuth();
+  const [stats, setStats] = useState({ followers: 0, following: 0 });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchFollowCounts = async () => {
+      try {
+        setLoading(true);
+        console.log("user id:", user.id);
+        const data = await usersAPI.getFollowCounts(user.id);
+        console.log("Follow counts:", data);
+        setStats(data);
+      } catch (error) {
+        console.error("Failed to fetch follow counts:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFollowCounts();
+  }, [user]);
 
   if (!user) {
     return <div>Loading...</div>;
@@ -31,11 +54,15 @@ const Profile = () => {
 
             <div className="profile-stats">
               <div className="stat">
-                <span className="stat-number">{user.following || 0}</span>
+                <span className="stat-number">
+                  {loading ? "..." : stats.following}
+                </span>
                 <span className="stat-label">Following</span>
               </div>
               <div className="stat">
-                <span className="stat-number">{user.followers || 0}</span>
+                <span className="stat-number">
+                  {loading ? "..." : stats.followers}
+                </span>
                 <span className="stat-label">Followers</span>
               </div>
             </div>
