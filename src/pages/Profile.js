@@ -75,6 +75,9 @@ const Profile = () => {
             >
               Edit Profile
             </button>
+            <button onClick={() => navigate("/change-password")}>
+              Change Password
+            </button>
           </div>
         </div>
       </div>

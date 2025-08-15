@@ -20,6 +20,7 @@ import TweetDetail from "./pages/TweetDetail";
 import Messages from "./pages/Messages";
 import Bookmarks from "./pages/Bookmarks";
 import EditProfile from "./pages/EditProfile";
+import ChangePassword from "./pages/ChangePassword";
 import "./App.css";
 
 function App() {
@@ -46,6 +47,7 @@ function App() {
                   <Route path="/tweet/:tweetId" element={<TweetDetail />} />
                   <Route path="/messages" element={<Messages />} />
                   <Route path="/bookmarks" element={<Bookmarks />} />
+                  <Route path="/change-password" element={<ChangePassword />} />
                 </Route>
               </Route>
 

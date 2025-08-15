@@ -241,7 +241,24 @@ export const usersAPI = {
         }
     },
 
-
+    // Change user password
+    changePassword: async (passwords, token) => {
+        try {
+            const response = await apiClient.put(
+                "/profile/change-password",
+                passwords,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            return response.data;
+        } catch (error) {
+            console.error("Error changing password:", error);
+            throw error.response?.data || error.message;
+        }
+    },
 
     // Follow/Unfollow user
     toggleFollow: async (userId) => {
