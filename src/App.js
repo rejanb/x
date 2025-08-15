@@ -19,6 +19,7 @@ import Notifications from "./pages/Notifications";
 import TweetDetail from "./pages/TweetDetail";
 import Messages from "./pages/Messages";
 import Bookmarks from "./pages/Bookmarks";
+import EditProfile from "./pages/EditProfile";
 import "./App.css";
 
 function App() {
@@ -39,6 +40,7 @@ function App() {
                 <Route element={<Layout />}>
                   <Route path="/home" element={<Home />} />
                   <Route path="/profile" element={<Profile />} />
+                  <Route path="/profile/edit" element={<EditProfile />} />
                   <Route path="/explore" element={<Explore />} />
                   <Route path="/notifications" element={<Notifications />} />
                   <Route path="/tweet/:tweetId" element={<TweetDetail />} />

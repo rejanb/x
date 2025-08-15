@@ -2,11 +2,13 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { usersAPI } from "../services/api";
 import "./Profile.css";
+import { useNavigate } from "react-router-dom";
 
 const Profile = () => {
   const { user } = useAuth();
   const [stats, setStats] = useState({ followers: 0, following: 0 });
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!user) return;
@@ -67,7 +69,12 @@ const Profile = () => {
               </div>
             </div>
 
-            <button className="edit-profile-button">Edit Profile</button>
+            <button
+              className="edit-profile-button"
+              onClick={() => navigate("/profile/edit")}
+            >
+              Edit Profile
+            </button>
           </div>
         </div>
       </div>

@@ -210,10 +210,10 @@ export const usersAPI = {
     getFollowCounts: async (userId) => {
         try {
             const response = await apiClient.get(`/users/${userId}/follow/counts`);
-            return response.data; 
+            return response.data;
         } catch (error) {
             console.error("Error fetching follow counts:", error);
-            return { followers: 0, following: 0 }; 
+            return { followers: 0, following: 0 };
         }
     },
 
@@ -228,14 +228,20 @@ export const usersAPI = {
     },
 
     // Update user profile
-    updateProfile: async (profileData) => {
+    updateProfile: async (profileData, token) => {
         try {
-            const response = await apiClient.put("/users/profile", profileData);
+            const response = await apiClient.put("/profile/update", profileData, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
         }
     },
+
+
 
     // Follow/Unfollow user
     toggleFollow: async (userId) => {
