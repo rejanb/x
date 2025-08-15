@@ -3,9 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useTweets } from "../../context/TweetContext";
 import { useConfirmationDialog } from "../../hooks/useConfirmationDialog";
-import Poll from "./Poll";
-import HashtagText from "../common/HashtagText";
 import ConfirmationDialog from "../common/ConfirmationDialog";
+import HashtagText from "../common/HashtagText";
+import Poll from "./Poll";
 import "./TweetCard.css";
 
 const TweetCard = ({ tweet }) => {
@@ -14,20 +14,40 @@ const TweetCard = ({ tweet }) => {
   const { isOpen, dialogConfig, showConfirmation } = useConfirmationDialog();
   const navigate = useNavigate();
 
+  // Add safety check for tweet object AFTER hooks
+  if (!tweet || typeof tweet !== 'object') {
+    console.warn('TweetCard received invalid tweet:', tweet);
+    return null;
+  }
+
+  // Get the correct ID field
+  const tweetId = tweet._id || tweet.id;
+  const authorId = tweet.authorId || 'unknown';
+  const content = tweet.content || '';
+  const createdAt = tweet.createdAt || new Date();
+  const media = tweet.media || [];
+  const poll = tweet.poll || null;
+
   const handleTweetClick = (e) => {
     // Don't navigate if clicking on action buttons
     if (e.target.closest(".tweet-actions") || e.target.closest(".delete-btn")) {
       return;
     }
-    navigate(`/tweet/${tweet.id}`);
+    if (tweetId) {
+      navigate(`/tweet/${tweetId}`);
+    }
   };
 
   const handleLike = () => {
-    toggleLike(tweet.id, tweet.liked);
+    if (tweetId) {
+      toggleLike(tweetId, tweet.liked);
+    }
   };
 
   const handleRetweet = () => {
-    toggleRetweet(tweet.id, tweet.retweeted);
+    if (tweetId) {
+      toggleRetweet(tweetId, tweet.retweeted);
+    }
   };
 
   const handleDelete = async () => {
@@ -40,8 +60,8 @@ const TweetCard = ({ tweet }) => {
       type: "danger",
     });
 
-    if (confirmed) {
-      deleteTweet(tweet.id);
+    if (confirmed && tweetId) {
+      deleteTweet(tweetId);
     }
   };
 
@@ -57,30 +77,23 @@ const TweetCard = ({ tweet }) => {
     return date.toLocaleDateString();
   };
 
-  const isOwner = user && user.id === tweet.author.id;
+  const isOwner = user && user.id === authorId;
 
   return (
     <div className="tweet-card" style={{ cursor: "pointer" }}>
       <div className="tweet-header">
         <div className="tweet-avatar">
-          {tweet.author.profilePicture ? (
-            <img
-              src={tweet.author.profilePicture}
-              alt={tweet.author.username}
-            />
-          ) : (
-            <div className="avatar-placeholder">
-              {tweet.author.username.charAt(0).toUpperCase()}
-            </div>
-          )}
+          <div className="avatar-placeholder">
+            {authorId.charAt(0).toUpperCase()}
+          </div>
         </div>
 
         <div className="tweet-info">
           <div className="tweet-author">
-            <span className="display-name">{tweet.author.displayName}</span>
-            <span className="username">@{tweet.author.username}</span>
+            <span className="display-name">{authorId}</span>
+            <span className="username">@{authorId}</span>
             <span className="timestamp" onClick={handleTweetClick}>
-              · {formatTime(tweet.createdAt)}
+              · {formatTime(createdAt)}
             </span>
           </div>
 
@@ -98,18 +111,18 @@ const TweetCard = ({ tweet }) => {
 
       <div className="tweet-content">
         <p>
-          <HashtagText text={tweet.content} />
+          <HashtagText text={content} />
         </p>
 
-        {tweet.images && tweet.images.length > 0 && (
+        {media.length > 0 && (
           <div className="tweet-images">
-            {tweet.images.map((image, index) => (
-              <img key={index} src={image} alt="" className="tweet-image" />
+            {media.map((mediaItem, index) => (
+              <img key={index} src={mediaItem} alt="" className="tweet-image" />
             ))}
           </div>
         )}
 
-        {tweet.poll && <Poll poll={tweet.poll} tweetId={tweet.id} />}
+        {poll && <Poll poll={poll} tweetId={tweetId} />}
       </div>
 
       <div className="tweet-actions">

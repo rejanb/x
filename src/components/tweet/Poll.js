@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useTweets } from "../../context/TweetContext";
 import "./Poll.css";
@@ -9,9 +9,11 @@ const Poll = ({ poll, tweetId }) => {
   const [timeLeft, setTimeLeft] = useState("");
 
   useEffect(() => {
+    if (!poll) return;
+    
     const updateTimeLeft = () => {
       const now = new Date();
-      const endTime = new Date(poll.endTime);
+      const endTime = new Date(poll.expiresAt);
       const timeDiff = endTime - now;
 
       if (timeDiff <= 0) {
@@ -60,11 +62,14 @@ const Poll = ({ poll, tweetId }) => {
     return Math.round((votes / poll.totalVotes) * 100);
   };
 
+
+
   const userVotedIndex = getUserVotedOption();
   const showResults = hasUserVoted() || isPollEnded();
 
   return (
     <div className="poll-container">
+      <div className="poll-question">{poll.question}</div>
       <div className="poll-options">
         {poll.options.map((option, index) => (
           <div key={index} className="poll-option">
@@ -75,14 +80,14 @@ const Poll = ({ poll, tweetId }) => {
                 }`}
               >
                 <div className="poll-result-content">
-                  <span className="poll-option-text">{option.text}</span>
+                  <span className="poll-option-text">{option}</span>
                   <span className="poll-percentage">
-                    {getPercentage(option.votes)}%
+                    {getPercentage(0)}%
                   </span>
                 </div>
                 <div
                   className="poll-progress-bar"
-                  style={{ width: `${getPercentage(option.votes)}%` }}
+                  style={{ width: `${getPercentage(0)}%` }}
                 />
                 {userVotedIndex === index && (
                   <div className="vote-indicator">✓</div>
@@ -94,7 +99,7 @@ const Poll = ({ poll, tweetId }) => {
                 onClick={() => handleVote(index)}
                 disabled={isPollEnded()}
               >
-                {option.text}
+                {option}
               </button>
             )}
           </div>

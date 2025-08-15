@@ -6,6 +6,25 @@
   background: #f7f9fa;
 }
 
+.poll-question {
+  font-weight: 600;
+  font-size: 16px;
+  margin-bottom: 16px;
+  color: #0f1419;
+}
+
+.poll-loading,
+.poll-error {
+  text-align: center;
+  padding: 20px;
+  color: #536471;
+  font-size: 14px;
+}
+
+.poll-error {
+  color: #f4212e;
+}
+
 .poll-options {
   margin-bottom: 12px;
 }

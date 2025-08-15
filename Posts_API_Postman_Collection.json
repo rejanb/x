@@ -1,0 +1,571 @@
+{
+  "info": {
+    "name": "Twitter Clone - Posts API",
+    "description": "Unified Posts API for creating posts with text, media, and polls",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create Post - Text Only",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "content",
+              "value": "Hello, this is my first post! #hello #first",
+              "type": "text"
+            },
+            {
+              "key": "authorId",
+              "value": "user123",
+              "type": "text"
+            },
+            {
+              "key": "hashtags[]",
+              "value": "hello",
+              "type": "text"
+            },
+            {
+              "key": "hashtags[]",
+              "value": "first",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/posts",
+          "host": ["{{base_url}}"],
+          "path": ["posts"]
+        },
+        "description": "Create a simple text post with hashtags"
+      }
+    },
+    {
+      "name": "Create Post - With Media",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "content",
+              "value": "Check out these amazing photos! #photography #art",
+              "type": "text"
+            },
+            {
+              "key": "authorId",
+              "value": "user123",
+              "type": "text"
+            },
+            {
+              "key": "files",
+              "type": "file",
+              "src": []
+            },
+            {
+              "key": "hashtags[]",
+              "value": "photography",
+              "type": "text"
+            },
+            {
+              "key": "hashtags[]",
+              "value": "art",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/posts",
+          "host": ["{{base_url}}"],
+          "path": ["posts"]
+        },
+        "description": "Create a post with media files (images/videos)"
+      }
+    },
+    {
+      "name": "Create Post - With Poll",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "content",
+              "value": "What's your favorite programming language? Vote now! #coding #poll",
+              "type": "text"
+            },
+            {
+              "key": "authorId",
+              "value": "user123",
+              "type": "text"
+            },
+            {
+              "key": "poll[question]",
+              "value": "What's your favorite programming language?",
+              "type": "text"
+            },
+            {
+              "key": "poll[options][]",
+              "value": "JavaScript",
+              "type": "text"
+            },
+            {
+              "key": "poll[options][]",
+              "value": "Python",
+              "type": "text"
+            },
+            {
+              "key": "poll[options][]",
+              "value": "Java",
+              "type": "text"
+            },
+            {
+              "key": "poll[options][]",
+              "value": "TypeScript",
+              "type": "text"
+            },
+            {
+              "key": "poll[expiresAt]",
+              "value": "2024-12-31T23:59:59Z",
+              "type": "text"
+            },
+            {
+              "key": "poll[userId]",
+              "value": "user123",
+              "type": "text"
+            },
+            {
+              "key": "hashtags[]",
+              "value": "coding",
+              "type": "text"
+            },
+            {
+              "key": "hashtags[]",
+              "value": "poll",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/posts",
+          "host": ["{{base_url}}"],
+          "path": ["posts"]
+        },
+        "description": "Create a post with a poll (question and options)"
+      }
+    },
+    {
+      "name": "Create Post - With Media + Poll",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "content",
+              "value": "Vote on your favorite programming language! Check out this infographic! #coding #poll #infographic",
+              "type": "text"
+            },
+            {
+              "key": "authorId",
+              "value": "user123",
+              "type": "text"
+            },
+            {
+              "key": "files",
+              "type": "file",
+              "src": []
+            },
+            {
+              "key": "poll[question]",
+              "value": "What's your favorite programming language?",
+              "type": "text"
+            },
+            {
+              "key": "poll[options][]",
+              "value": "JavaScript",
+              "type": "text"
+            },
+            {
+              "key": "poll[options][]",
+              "value": "Python",
+              "type": "text"
+            },
+            {
+              "key": "poll[options][]",
+              "value": "Java",
+              "type": "text"
+            },
+            {
+              "key": "poll[expiresAt]",
+              "value": "2024-12-31T23:59:59Z",
+              "type": "text"
+            },
+            {
+              "key": "poll[userId]",
+              "value": "user123",
+              "type": "text"
+            },
+            {
+              "key": "hashtags[]",
+              "value": "coding",
+              "type": "text"
+            },
+            {
+              "key": "hashtags[]",
+              "value": "poll",
+              "type": "text"
+            },
+            {
+              "key": "hashtags[]",
+              "value": "infographic",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/posts",
+          "host": ["{{base_url}}"],
+          "path": ["posts"]
+        },
+        "description": "Create a post with both media files and a poll"
+      }
+    },
+    {
+      "name": "Create Post - With Mentions",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "content",
+              "value": "Hey @john and @jane, what do you think about this new feature? #collaboration",
+              "type": "text"
+            },
+            {
+              "key": "authorId",
+              "value": "user123",
+              "type": "text"
+            },
+            {
+              "key": "mentions[]",
+              "value": "@john",
+              "type": "text"
+            },
+            {
+              "key": "mentions[]",
+              "value": "@jane",
+              "type": "text"
+            },
+            {
+              "key": "hashtags[]",
+              "value": "collaboration",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/posts",
+          "host": ["{{base_url}}"],
+          "path": ["posts"]
+        },
+        "description": "Create a post with user mentions"
+      }
+    },
+    {
+      "name": "Get All Posts",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/posts?page=1&limit=10",
+          "host": ["{{base_url}}"],
+          "path": ["posts"],
+          "query": [
+            {
+              "key": "page",
+              "value": "1",
+              "description": "Page number (starts from 1)"
+            },
+            {
+              "key": "limit",
+              "value": "10",
+              "description": "Number of posts per page"
+            },
+            {
+              "key": "authorId",
+              "value": "user123",
+              "description": "Filter by author ID (optional)",
+              "disabled": true
+            }
+          ]
+        },
+        "description": "Get all posts with pagination"
+      }
+    },
+    {
+      "name": "Get Post by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/posts/{{post_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["posts", "{{post_id}}"]
+        },
+        "description": "Get a specific post by its ID"
+      }
+    },
+    {
+      "name": "Update Post",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"content\": \"Updated post content with new hashtags\",\n  \"hashtags\": [\"updated\", \"content\", \"new\"]\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/posts/{{post_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["posts", "{{post_id}}"]
+        },
+        "description": "Update an existing post"
+      }
+    },
+    {
+      "name": "Delete Post",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/posts/{{post_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["posts", "{{post_id}}"]
+        },
+        "description": "Soft delete a post (marks as deleted)"
+      }
+    },
+    {
+      "name": "Like Post",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/posts/{{post_id}}/like?userId={{user_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["posts", "{{post_id}}", "like"],
+          "query": [
+            {
+              "key": "userId",
+              "value": "{{user_id}}",
+              "description": "ID of the user liking the post"
+            }
+          ]
+        },
+        "description": "Like a post"
+      }
+    },
+    {
+      "name": "Unlike Post",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/posts/{{post_id}}/unlike?userId={{user_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["posts", "{{post_id}}", "unlike"],
+          "query": [
+            {
+              "key": "userId",
+              "value": "{{user_id}}",
+              "description": "ID of the user unliking the post"
+            }
+          ]
+        },
+        "description": "Unlike a post"
+      }
+    },
+    {
+      "name": "Retweet Post",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/posts/{{post_id}}/retweet?userId={{user_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["posts", "{{post_id}}", "retweet"],
+          "query": [
+            {
+              "key": "userId",
+              "value": "{{user_id}}",
+              "description": "ID of the user retweeting the post"
+            }
+          ]
+        },
+        "description": "Retweet a post"
+      }
+    },
+    {
+      "name": "Get Post Replies",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/posts/{{post_id}}/replies?page=1&limit=10",
+          "host": ["{{base_url}}"],
+          "path": ["posts", "{{post_id}}", "replies"],
+          "query": [
+            {
+              "key": "page",
+              "value": "1",
+              "description": "Page number"
+            },
+            {
+              "key": "limit",
+              "value": "10",
+              "description": "Number of replies per page"
+            }
+          ]
+        },
+        "description": "Get replies to a specific post"
+      }
+    },
+    {
+      "name": "Reply to Post",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "content",
+              "value": "This is my reply to the post!",
+              "type": "text"
+            },
+            {
+              "key": "authorId",
+              "value": "{{user_id}}",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/posts/{{post_id}}/reply",
+          "host": ["{{base_url}}"],
+          "path": ["posts", "{{post_id}}", "reply"]
+        },
+        "description": "Reply to a specific post"
+      }
+    },
+    {
+      "name": "Search Posts",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/posts/search?query=programming&page=1&limit=10",
+          "host": ["{{base_url}}"],
+          "path": ["posts", "search"],
+          "query": [
+            {
+              "key": "query",
+              "value": "programming",
+              "description": "Search query"
+            },
+            {
+              "key": "page",
+              "value": "1",
+              "description": "Page number"
+            },
+            {
+              "key": "limit",
+              "value": "10",
+              "description": "Number of results per page"
+            }
+          ]
+        },
+        "description": "Search posts by content, hashtags, or mentions"
+      }
+    },
+    {
+      "name": "Get Trending Hashtags",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/posts/trending-hashtags?limit=10",
+          "host": ["{{base_url}}"],
+          "path": ["posts", "trending-hashtags"],
+          "query": [
+            {
+              "key": "limit",
+              "value": "10",
+              "description": "Number of trending hashtags to return"
+            }
+          ]
+        },
+        "description": "Get trending hashtags based on post frequency"
+      }
+    },
+    {
+      "name": "Get User Timeline",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/posts/timeline/{{user_id}}?page=1&limit=10",
+          "host": ["{{base_url}}"],
+          "path": ["posts", "timeline", "{{user_id}}"],
+          "query": [
+            {
+              "key": "page",
+              "value": "1",
+              "description": "Page number"
+            },
+            {
+              "key": "limit",
+              "value": "10",
+              "description": "Number of posts per page"
+            }
+          ]
+        },
+        "description": "Get timeline for a specific user (posts from followed users + own posts)"
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string",
+      "description": "Base URL for the API"
+    },
+    {
+      "key": "post_id",
+      "value": "your_post_id_here",
+      "type": "string",
+      "description": "Replace with actual post ID for testing"
+    },
+    {
+      "key": "user_id",
+      "value": "your_user_id_here",
+      "type": "string",
+      "description": "Replace with actual user ID for testing"
+    }
+  ]
+}

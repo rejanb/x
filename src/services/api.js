@@ -103,10 +103,41 @@ export const postsAPI = {
         }
     },
 
-    // Create new post
+    // Create new post (text, media, hashtags, mentions)
     createPost: async (postData) => {
         try {
             const response = await apiClient.post("/posts", postData);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    // Create post with media files
+    createPostWithMedia: async (postData, files) => {
+        try {
+            const formData = new FormData();
+            
+            // Add post data
+            formData.append('content', postData.content);
+            formData.append('authorId', postData.authorId);
+            if (postData.hashtags) {
+                postData.hashtags.forEach(tag => formData.append('hashtags[]', tag));
+            }
+            if (postData.mentions) {
+                postData.mentions.forEach(mention => formData.append('mentions[]', mention));
+            }
+            
+            // Add media files
+            if (files && files.length > 0) {
+                files.forEach(file => formData.append('files', file));
+            }
+            
+            const response = await apiClient.post("/posts", formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -159,6 +190,52 @@ export const postsAPI = {
             const response = await apiClient.get(
                 `/posts/user/${userId}?page=${page}&limit=${limit}`
             );
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+};
+
+// Polls API functions
+export const pollsAPI = {
+    // Create a new poll
+    createPoll: async (pollData) => {
+        try {
+            const response = await apiClient.post("/polls", pollData);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    // Get poll by ID
+    getPollById: async (pollId) => {
+        try {
+            const response = await apiClient.get(`/polls/${pollId}`);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    // Vote on a poll
+    voteOnPoll: async (pollId, optionIndex, userId) => {
+        try {
+            const response = await apiClient.post(`/polls/${pollId}/vote`, {
+                optionIndex,
+                userId
+            });
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    // Get poll results
+    getPollResults: async (pollId) => {
+        try {
+            const response = await apiClient.get(`/polls/${pollId}/results`);
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -314,40 +391,7 @@ export const mediaAPI = {
     },
 };
 
-// Polls API functions
-export const pollsAPI = {
-    // Create poll
-    createPoll: async (pollData) => {
-        try {
-            const response = await apiClient.post("/polls", pollData);
-            return response.data;
-        } catch (error) {
-            throw error.response?.data || error.message;
-        }
-    },
 
-    // Vote on poll
-    votePoll: async (pollId, optionId) => {
-        try {
-            const response = await apiClient.post(`/polls/${pollId}/vote`, {
-                optionId,
-            });
-            return response.data;
-        } catch (error) {
-            throw error.response?.data || error.message;
-        }
-    },
-
-    // Get poll results
-    getPollResults: async (pollId) => {
-        try {
-            const response = await apiClient.get(`/polls/${pollId}/results`);
-            return response.data;
-        } catch (error) {
-            throw error.response?.data || error.message;
-        }
-    },
-};
 
 // Notifications API functions
 export const notificationsAPI = {
