@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // Base API URL from environment variables
-const BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:3000/api";
+const BASE_URL = process.env.REACT_APP_API_URL || "https://twitter-clone-backend-lpjd.onrender.com/api";
 
 // Create axios instance with default configuration
 const apiClient = axios.create({
