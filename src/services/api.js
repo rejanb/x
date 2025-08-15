@@ -206,6 +206,17 @@ export const commentsAPI = {
 
 // Users API functions
 export const usersAPI = {
+
+    getFollowCounts: async (userId) => {
+        try {
+            const response = await apiClient.get(`/users/${userId}/follow/counts`);
+            return response.data; 
+        } catch (error) {
+            console.error("Error fetching follow counts:", error);
+            return { followers: 0, following: 0 }; 
+        }
+    },
+
     // Get user profile
     getUserProfile: async (userId) => {
         try {
