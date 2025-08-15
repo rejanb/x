@@ -106,13 +106,14 @@ const SuggestedUsers = () => {
             </div>
 
             <button
-              className={`follow-btn ${
-                followedUsers.has(user.id) ? "following" : ""
-              }`}
+              className={`follow-btn ${followedUsers.has(user.id) ? "following" : ""}`}
               onClick={() => handleFollow(user.id)}
             >
-              {followedUsers.has(user.id) ? "Following" : "Follow"}
+              <span className="follow-text">
+                {followedUsers.has(user.id) ? "Following" : "Follow"}
+              </span>
             </button>
+
           </div>
         ))}
       </div>
