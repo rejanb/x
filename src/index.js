@@ -16,19 +16,16 @@ root.render(
 // or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
 reportWebVitals();
 
-// Temporarily disable service worker for testing
-// Clear any existing service worker
+// Service Worker behavior: register in production, unregister in development
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then(function(registrations) {
-    for(let registration of registrations) {
-      registration.unregister();
-      console.log('🗑️ Service worker unregistered for testing');
+  window.addEventListener('load', () => {
+    if (process.env.NODE_ENV === 'production') {
+      navigator.serviceWorker.register('/sw.js').catch(console.error);
+    } else {
+      // Keep dev free of stale caches
+      navigator.serviceWorker.getRegistrations().then((regs) => {
+        regs.forEach((r) => r.unregister());
+      });
     }
   });
 }
-
-// if ('serviceWorker' in navigator) {
-//   window.addEventListener('load', () => {
-//     navigator.serviceWorker.register('/sw.js').catch(console.error);
-//   });
-// }

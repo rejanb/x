@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import websocketService from '../services/websocket';
-import pushNotificationService from '../services/pushNotifications';
 import { useAuth } from './AuthContext';
 
 const RealTimeContext = createContext();
@@ -64,22 +63,29 @@ export const RealTimeProvider = ({ children }) => {
 
   useEffect(() => {
     if (token && user) {
-      // Initialize push notifications
+      // Initialize push notifications with dynamic import to avoid webpack cache issues
       const initPushNotifications = async () => {
-        const initialized = await pushNotificationService.initialize();
-        
-        if (initialized) {
-          // Automatically request permission
-          const permissionGranted = await pushNotificationService.requestPermission();
+        try {
+          // Dynamic import to force fresh module loading
+          const { default: pushService } = await import('../services/pnsClient.js');
           
-          if (permissionGranted) {
-            // Subscribe to push notifications
-            const subscribed = await pushNotificationService.subscribe(token);
+          const initialized = await pushService.initialize();
+          
+          if (initialized) {
+            // Automatically request permission
+            const permissionGranted = await pushService.requestPermission();
+            
+            if (permissionGranted) {
+              // Subscribe to push notifications
+              await pushService.subscribe(token);
+            }
+            
+            // Update status regardless of subscription result
+            const finalStatus = pushService.getStatus();
+            setPushNotificationStatus(finalStatus);
           }
-          
-          // Update status regardless of subscription result
-          const finalStatus = pushNotificationService.getStatus();
-          setPushNotificationStatus(finalStatus);
+        } catch (error) {
+          console.error('Push notification initialization failed:', error);
         }
       };
       
@@ -250,7 +256,7 @@ export const RealTimeProvider = ({ children }) => {
         websocketService.disconnect();
       };
     }
-  }, [token, user, pushNotificationStatus.isSubscribed]);
+  }, [token, user]);
 
   const clearNewPostsCount = () => {
     setNewPostsCount(0);
@@ -270,27 +276,42 @@ export const RealTimeProvider = ({ children }) => {
 
   // Push notification methods
   const enablePushNotifications = async () => {
-    if (!token) return false;
-    
-    const hasPermission = await pushNotificationService.requestPermission();
-    if (!hasPermission) return false;
-    
-    const subscribed = await pushNotificationService.subscribe(token);
-    setPushNotificationStatus(pushNotificationService.getStatus());
-    return subscribed;
+    try {
+      const { default: pushService } = await import('../services/pnsClient.js');
+      await pushService.requestPermission();
+      
+      const subscribed = await pushService.subscribe(token);
+      setPushNotificationStatus(pushService.getStatus());
+      
+      return subscribed;
+    } catch (error) {
+      console.error('Failed to enable push notifications:', error);
+      return false;
+    }
   };
 
   const disablePushNotifications = async () => {
-    if (!token) return false;
-    
-    const unsubscribed = await pushNotificationService.unsubscribe(token);
-    setPushNotificationStatus(pushNotificationService.getStatus());
-    return unsubscribed;
+    try {
+      const { default: pushService } = await import('../services/pnsClient.js');
+      const unsubscribed = await pushService.unsubscribe(token);
+      setPushNotificationStatus(pushService.getStatus());
+      
+      return unsubscribed;
+    } catch (error) {
+      console.error('Failed to disable push notifications:', error);
+      return false;
+    }
   };
 
   const sendTestPushNotification = async () => {
     if (!token) return false;
-    return await pushNotificationService.sendTestNotification(token);
+    try {
+      const { default: pushService } = await import('../services/pnsClient.js');
+      return await pushService.sendTestNotification(token);
+    } catch (error) {
+      console.error('Failed to send test push notification:', error);
+      return false;
+    }
   };
 
   // Function to manually trigger notifications for testing

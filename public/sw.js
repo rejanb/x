@@ -1,4 +1,4 @@
-const CACHE_NAME = 'twitter-clone-pwa-v1';
+const CACHE_NAME = 'twitter-clone-pwa-v2';
 const CORE_ASSETS = [
   '/',
   '/index.html',
@@ -26,12 +26,23 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = new URL(req.url);
-  
+
   // Skip caching for unsupported schemes (chrome-extension, moz-extension, etc.)
   if (!url.protocol.startsWith('http')) {
     return;
   }
-  
+
+  // In local development, do not intercept app asset requests to avoid stale bundles
+  const isLocalDev = ['localhost', '127.0.0.1'].includes(self.location.hostname);
+  if (isLocalDev) {
+    // Only apply a network-first strategy for API calls; let the browser handle everything else
+    if (url.pathname.startsWith('/api')) {
+      event.respondWith(networkFirst(req));
+    }
+    return;
+  }
+
+  // Production behavior: cache-first for app shell, network-first for API
   if (url.pathname.startsWith('/api')) {
     event.respondWith(networkFirst(req));
   } else {
