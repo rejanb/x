@@ -1,24 +1,49 @@
-import React from "react";
+import React, { useState, useCallback } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useTweets } from "../../context/TweetContext";
 import { useConfirmationDialog } from "../../hooks/useConfirmationDialog";
 import Poll from "./Poll";
 import HashtagText from "../common/HashtagText";
 import ConfirmationDialog from "../common/ConfirmationDialog";
+import RetweetMenu from "./RetweetMenu";
+import QuoteTweetModal from "./QuoteTweetModal";
 import "./TweetDetailCard.css";
 
-const TweetDetailCard = ({ tweet }) => {
+const TweetDetailCard = ({ tweet, onLike, onRetweet, onReply }) => {
   const { user } = useAuth();
   const { toggleLike, toggleRetweet, deleteTweet } = useTweets();
   const { isOpen, dialogConfig, showConfirmation } = useConfirmationDialog();
+  const [rtMenuOpen, setRtMenuOpen] = useState(false);
+  const [quoteOpen, setQuoteOpen] = useState(false);
 
   const handleLike = () => {
+    if (onLike) return onLike(tweet);
     toggleLike(tweet.id, tweet.liked);
   };
 
-  const handleRetweet = () => {
-    toggleRetweet(tweet.id, tweet.retweeted);
-  };
+  const handleRetweetButton = useCallback(() => {
+    // Open menu like Twitter instead of immediate toggle
+    setRtMenuOpen((v) => !v);
+  }, []);
+
+  const handleMenuRetweet = useCallback(() => {
+    setRtMenuOpen(false);
+    if (onRetweet) return onRetweet(tweet);
+    // Ensure we only retweet if currently not retweeted
+    if (!tweet.retweeted) toggleRetweet(tweet.id, false);
+  }, [onRetweet, toggleRetweet, tweet]);
+
+  const handleMenuUnretweet = useCallback(() => {
+    setRtMenuOpen(false);
+    if (onRetweet) return onRetweet(tweet);
+    // Ensure we only unretweet if currently retweeted
+    if (tweet.retweeted) toggleRetweet(tweet.id, true);
+  }, [onRetweet, toggleRetweet, tweet]);
+
+  const handleQuote = useCallback(() => {
+    setRtMenuOpen(false);
+    setQuoteOpen(true);
+  }, []);
 
   const handleDelete = async () => {
     const confirmed = await showConfirmation({
@@ -146,19 +171,31 @@ const TweetDetailCard = ({ tweet }) => {
           </svg>
         </button>
 
-        <button
-          className={`action-button retweet-button ${
-            tweet.retweeted ? "retweeted" : ""
-          }`}
-          onClick={handleRetweet}
-        >
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-            <path d="M4.75 3.79l4.603 4.3-1.706 1.82L6 8.38v7.37c0 .97.784 1.75 1.75 1.75H13V19.5H7.75c-1.517 0-2.75-1.233-2.75-2.75V8.38L3.353 9.91 1.647 8.09 4.75 3.79zM19.25 20.21l-4.603-4.3 1.706-1.82L18 15.62V8.25c0-.97-.784-1.75-1.75-1.75H11V4.5h5.25c1.517 0 2.75 1.233 2.75 2.75v7.37l1.647-1.53 1.706 1.82-4.103 3.79z" />
-          </svg>
-        </button>
+        <div style={{ position: 'relative', display: 'inline-block' }}>
+          <button
+            className={`action-button retweet-button ${
+              tweet.retweeted ? "active" : ""
+            }`}
+            aria-pressed={!!tweet.retweeted}
+            onClick={handleRetweetButton}
+          >
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+              <path d="M4.75 3.79l4.603 4.3-1.706 1.82L6 8.38v7.37c0 .97.784 1.75 1.75 1.75H13V19.5H7.75c-1.517 0-2.75-1.233-2.75-2.75V8.38L3.353 9.91 1.647 8.09 4.75 3.79zM19.25 20.21l-4.603-4.3 1.706-1.82L18 15.62V8.25c0-.97-.784-1.75-1.75-1.75H11V4.5h5.25c1.517 0 2.75 1.233 2.75 2.75v7.37l1.647-1.53 1.706 1.82-4.103 3.79z" />
+            </svg>
+          </button>
+          <RetweetMenu
+            open={rtMenuOpen}
+            onClose={() => setRtMenuOpen(false)}
+            onRetweet={handleMenuRetweet}
+            onUnretweet={handleMenuUnretweet}
+            onQuote={handleQuote}
+            retweeted={!!tweet.retweeted}
+          />
+        </div>
 
         <button
-          className={`action-button like-button ${tweet.liked ? "liked" : ""}`}
+          className={`action-button like-button ${tweet.liked ? "active" : ""}`}
+          aria-pressed={!!tweet.liked}
           onClick={handleLike}
         >
           <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
@@ -166,6 +203,13 @@ const TweetDetailCard = ({ tweet }) => {
           </svg>
         </button>
       </div>
+
+      <QuoteTweetModal
+        open={quoteOpen}
+        tweet={tweet}
+        onClose={() => setQuoteOpen(false)}
+        onSubmit={() => setQuoteOpen(false)}
+      />
 
       <ConfirmationDialog
         isOpen={isOpen}

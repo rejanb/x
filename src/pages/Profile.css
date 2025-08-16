@@ -52,6 +52,13 @@
   margin-bottom: 16px;
 }
 
+.profile-bio {
+  font-size: 15px;
+  color: #0f1419;
+  margin-bottom: 16px;
+  white-space: pre-wrap;
+}
+
 .profile-stats {
   display: flex;
   gap: 20px;

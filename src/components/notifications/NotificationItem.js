@@ -45,7 +45,15 @@ const NotificationItem = ({ notification, onMarkAsRead }) => {
             </svg>
           </div>
         );
-      case "follow":
+  case "follow":
+        return (
+          <div className="notification-icon follow-icon">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+              <path d="M17.863 13.44c1.477 1.58 2.366 3.8 2.632 6.46l.11 1.1H3.395l.11-1.1c.266-2.66 1.155-4.88 2.632-6.46C7.627 11.85 9.648 11 12 11s4.373.85 5.863 2.44zM12 2C9.791 2 8 3.79 8 6s1.791 4 4 4 4-1.79 4-4-1.791-4-4-4z" />
+            </svg>
+          </div>
+        );
+      case "unfollow":
         return (
           <div className="notification-icon follow-icon">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
@@ -62,7 +70,9 @@ const NotificationItem = ({ notification, onMarkAsRead }) => {
           </div>
         );
       case "mention":
-      case "reply":
+  case "reply":
+  case "comment":
+  case "comment-like":
         return (
           <div className="notification-icon mention-icon">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
@@ -159,6 +169,28 @@ const NotificationItem = ({ notification, onMarkAsRead }) => {
           </div>
         );
 
+      case "unfollow":
+        return (
+          <div className="notification-content">
+            <div className="notification-text">
+              <span className="user-name">{notification.user.displayName}</span>
+              {notification.user.verified && (
+                <span className="verified" title="Verified">
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="16"
+                    height="16"
+                    fill="currentColor"
+                  >
+                    <path d="M22.25 12c0-1.43-.88-2.67-2.19-3.34.46-1.39.2-2.9-.81-3.91s-2.52-1.27-3.91-.81c-.66-1.31-1.91-2.19-3.34-2.19s-2.67.88-3.33 2.19c-1.4-.46-2.91-.2-3.92.81s-1.26 2.52-.8 3.91c-1.31.67-2.2 1.91-2.2 3.34s.89 2.67 2.2 3.34c-.46 1.39-.21 2.9.8 3.91s2.52 1.26 3.91.81c.67 1.31 1.91 2.19 3.34 2.19s2.68-.88 3.34-2.19c1.39.45 2.9.2 3.91-.81s1.27-2.52.81-3.91c1.31-.67 2.19-1.91 2.19-3.34zm-11.71 4.2L6.8 12.46l1.41-1.42 2.26 2.26 4.8-5.23 1.47 1.36-6.2 6.77z" />
+                  </svg>
+                </span>
+              )}
+              <span className="notification-action"> unfollowed you</span>
+            </div>
+          </div>
+        );
+
       case "new_post":
         return (
           <div className="notification-content">
@@ -227,6 +259,56 @@ const NotificationItem = ({ notification, onMarkAsRead }) => {
                 </span>
               )}
               <span className="notification-action"> replied to your post</span>
+            </div>
+            {notification.tweet && (
+              <div className="tweet-preview">{notification.tweet.content}</div>
+            )}
+          </div>
+        );
+
+      case "comment":
+        return (
+          <div className="notification-content">
+            <div className="notification-text">
+              <span className="user-name">{notification.user.displayName}</span>
+              {notification.user.verified && (
+                <span className="verified" title="Verified">
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="16"
+                    height="16"
+                    fill="currentColor"
+                  >
+                    <path d="M22.25 12c0-1.43-.88-2.67-2.19-3.34.46-1.39.2-2.9-.81-3.91s-2.52-1.27-3.91-.81c-.66-1.31-1.91-2.19-3.34-2.19s-2.67.88-3.33 2.19c-1.4-.46-2.91-.2-3.92.81s-1.26 2.52-.8 3.91c-1.31.67-2.2 1.91-2.2 3.34s.89 2.67 2.2 3.34c-.46 1.39-.21 2.9.8 3.91s2.52 1.26 3.91.81c.67 1.31 1.91 2.19 3.34 2.19s2.68-.88 3.34-2.19c1.39.45 2.9.2 3.91-.81s1.27-2.52.81-3.91c1.31-.67 2.19-1.91 2.19-3.34zm-11.71 4.2L6.8 12.46l1.41-1.42 2.26 2.26 4.8-5.23 1.47 1.36-6.2 6.77z" />
+                  </svg>
+                </span>
+              )}
+              <span className="notification-action"> commented on your post</span>
+            </div>
+            {notification.tweet && (
+              <div className="tweet-preview">{notification.tweet.content}</div>
+            )}
+          </div>
+        );
+
+      case "comment-like":
+        return (
+          <div className="notification-content">
+            <div className="notification-text">
+              <span className="user-name">{notification.user.displayName}</span>
+              {notification.user.verified && (
+                <span className="verified" title="Verified">
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="16"
+                    height="16"
+                    fill="currentColor"
+                  >
+                    <path d="M22.25 12c0-1.43-.88-2.67-2.19-3.34.46-1.39.2-2.9-.81-3.91s-2.52-1.27-3.91-.81c-.66-1.31-1.91-2.19-3.34-2.19s-2.67.88-3.33 2.19c-1.4-.46-2.91-.2-3.92.81s-1.26 2.52-.8 3.91c-1.31.67-2.2 1.91-2.2 3.34s.89 2.67 2.2 3.34c-.46 1.39-.21 2.9.8 3.91s2.52 1.26 3.91.81c.67 1.31 1.91 2.19 3.34 2.19s2.68-.88 3.34-2.19c1.39.45 2.9.2 3.91-.81s1.27-2.52.81-3.91c1.31-.67 2.19-1.91 2.19-3.34zm-11.71 4.2L6.8 12.46l1.41-1.42 2.26 2.26 4.8-5.23 1.47 1.36-6.2 6.77z" />
+                  </svg>
+                </span>
+              )}
+              <span className="notification-action"> liked your comment</span>
             </div>
             {notification.tweet && (
               <div className="tweet-preview">{notification.tweet.content}</div>

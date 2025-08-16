@@ -2,7 +2,7 @@ import React from "react";
 import CommentItem from "./CommentItem";
 import "./CommentList.css";
 
-const CommentList = ({ comments }) => {
+const CommentList = ({ comments, postId, onReplied }) => {
   if (!comments || comments.length === 0) {
     return (
       <div className="empty-comments">
@@ -23,7 +23,7 @@ const CommentList = ({ comments }) => {
 
       <div className="comments">
         {comments.map((comment) => (
-          <CommentItem key={comment.id} comment={comment} />
+          <CommentItem key={comment.id} comment={comment} postId={postId} onReplied={onReplied} />
         ))}
       </div>
     </div>

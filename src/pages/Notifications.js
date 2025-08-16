@@ -151,6 +151,8 @@ const Notifications = () => {
         )
       );
       setUnreadCount((prev) => Math.max(0, prev - 1));
+  // Inform other parts (e.g., sidebar) to update badge
+  window.dispatchEvent(new CustomEvent('notifications:markedAsRead', { detail: { id: notificationId, delta: 1 } }));
 
       // Update on server
       await notificationAPI.markAsRead(notificationId);
@@ -174,6 +176,7 @@ const Notifications = () => {
       // Optimistically update UI
       setNotifications((prev) => prev.map((notif) => ({ ...notif, read: true })));
       setUnreadCount(0);
+  window.dispatchEvent(new Event('notifications:markedAllAsRead'));
 
       // Update on server
       await notificationAPI.markAllAsRead();

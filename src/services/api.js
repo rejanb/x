@@ -166,20 +166,49 @@ export const postsAPI = {
         }
     },
 
-    // Like/Unlike post
-    toggleLike: async (postId) => {
+    // Like a post
+    likePost: async (postId, userIdOverride) => {
         try {
-            const response = await apiClient.post(`/posts/${postId}/like`);
+            // Backend expects userId in body
+            const userId = userIdOverride || usersAPI._getCurrentUserId?.();
+            if (!userId) throw new Error("Not authenticated: userId is required");
+            const response = await apiClient.post(`/posts/${postId}/like`, { userId });
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
         }
     },
 
-    // Retweet post
-    retweet: async (postId) => {
+    // Unlike a post
+    unlikePost: async (postId, userIdOverride) => {
         try {
-            const response = await apiClient.post(`/posts/${postId}/retweet`);
+            const userId = userIdOverride || usersAPI._getCurrentUserId?.();
+            if (!userId) throw new Error("Not authenticated: userId is required");
+            const response = await apiClient.delete(`/posts/${postId}/like`, { data: { userId } });
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    // Retweet a post
+    retweet: async (postId, userIdOverride) => {
+        try {
+            const userId = userIdOverride || usersAPI._getCurrentUserId?.();
+            if (!userId) throw new Error("Not authenticated: userId is required");
+            const response = await apiClient.post(`/posts/${postId}/retweet`, { userId });
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    // Undo retweet
+    unretweet: async (postId, userIdOverride) => {
+        try {
+            const userId = userIdOverride || usersAPI._getCurrentUserId?.();
+            if (!userId) throw new Error("Not authenticated: userId is required");
+            const response = await apiClient.delete(`/posts/${postId}/retweet`, { data: { userId } });
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -220,6 +249,28 @@ export const postsAPI = {
                 `/posts/liked?userId=${encodeURIComponent(userId)}&page=${page}&limit=${limit}`
             );
             return response.data; // { posts, total, page, limit }
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    // Search posts by content/hashtags/mentions
+    searchPosts: async (query, page = 1, limit = 10) => {
+        try {
+            if (!query) return { posts: [], total: 0, page, limit };
+            const params = new URLSearchParams({ q: query, page: String(page), limit: String(limit) });
+            const response = await apiClient.get(`/posts/search/content?${params.toString()}`);
+            return response.data; // { posts, total, page, limit }
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    // Get trending hashtags
+    getTrendingHashtags: async (limit = 10) => {
+        try {
+            const response = await apiClient.get(`/posts/trending/hashtags?limit=${limit}`);
+            return response.data; // { hashtags: [...] }
         } catch (error) {
             throw error.response?.data || error.message;
         }
@@ -278,7 +329,7 @@ export const commentsAPI = {
     getPostComments: async (postId, page = 1, limit = 10) => {
         try {
             const response = await apiClient.get(
-                `/posts/${postId}/comments?page=${page}&limit=${limit}`
+                `/comments/${postId}?page=${page}&limit=${limit}`
             );
             return response.data;
         } catch (error) {
@@ -289,10 +340,59 @@ export const commentsAPI = {
     // Add comment to post
     addComment: async (postId, commentData) => {
         try {
+            const userId = usersAPI._getCurrentUserId?.();
             const response = await apiClient.post(
-                `/posts/${postId}/comments`,
-                commentData
+                `/comments/${postId}`,
+                { authorId: userId, content: commentData.content || commentData }
             );
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    // Add a reply to a comment (same endpoint with parentCommentId)
+    addReply: async (postId, parentCommentId, content) => {
+        try {
+            const userId = usersAPI._getCurrentUserId?.();
+            const response = await apiClient.post(
+                `/comments/${postId}`,
+                { authorId: userId, content, parentCommentId }
+            );
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    // Like a comment
+    likeComment: async (commentId, userIdOverride) => {
+        try {
+            const userId = userIdOverride || usersAPI._getCurrentUserId?.();
+            if (!userId) throw new Error('Not authenticated: userId is required');
+            const response = await apiClient.post(`/comments/${commentId}/like`, { userId });
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    // Unlike a comment
+    unlikeComment: async (commentId, userIdOverride) => {
+        try {
+            const userId = userIdOverride || usersAPI._getCurrentUserId?.();
+            if (!userId) throw new Error('Not authenticated: userId is required');
+            const response = await apiClient.delete(`/comments/${commentId}/like`, { data: { userId } });
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    // Fetch replies for a comment
+    getReplies: async (commentId) => {
+        try {
+            const response = await apiClient.get(`/comments/${commentId}/replies`);
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -391,6 +491,11 @@ export const usersAPI = {
             const followerId = followerIdOverride || usersAPI._getCurrentUserId();
             if (!followerId) throw new Error("Not authenticated");
             const response = await apiClient.post(`/users/${userId}/follow`, { followerId });
+            try {
+                window.dispatchEvent(new CustomEvent('follow:changed', {
+                    detail: { type: 'follow', followerId, followingId: userId, timestamp: Date.now() }
+                }));
+            } catch (_) { /* no-op */ }
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -406,6 +511,11 @@ export const usersAPI = {
             const response = await apiClient.delete(`/users/${userId}/follow`, {
                 data: { followerId },
             });
+            try {
+                window.dispatchEvent(new CustomEvent('follow:changed', {
+                    detail: { type: 'unfollow', followerId, followingId: userId, timestamp: Date.now() }
+                }));
+            } catch (_) { /* no-op */ }
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;

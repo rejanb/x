@@ -4,16 +4,26 @@ import { useTweets } from "../context/TweetContext";
 import TweetDetailCard from "../components/tweet/TweetDetailCard";
 import CommentComposer from "../components/tweet/CommentComposer";
 import CommentList from "../components/tweet/CommentList";
-import { postsAPI, usersAPI } from "../services/api";
+import { postsAPI, usersAPI, commentsAPI } from "../services/api";
 import "./TweetDetail.css";
+import toast from "../utils/toast";
 
 const TweetDetail = () => {
   const { tweetId } = useParams();
   const navigate = useNavigate();
-  const { tweets } = useTweets();
+  const { tweets, toggleLike, toggleRetweet } = useTweets();
   const [tweet, setTweet] = useState(null);
   const [comments, setComments] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  // Current user id for deriving liked/retweeted flags
+  const currentUserId = (() => {
+    try {
+      const raw = localStorage.getItem('user');
+      return raw ? JSON.parse(raw)?.id : null;
+    } catch {
+      return null;
+    }
+  })();
 
   // Mock comments data - in real app, this would come from an API
   const mockComments = [
@@ -93,8 +103,43 @@ const TweetDetail = () => {
       const foundTweet = tweets.find((t) => t.id?.toString() === tweetId);
       if (foundTweet) {
         if (!isMounted) return;
-        setTweet(foundTweet);
-        setComments(mockComments);
+        // Ensure liked/retweeted are derived if missing
+        const normalizedFound = {
+          ...foundTweet,
+          liked: (
+            foundTweet?.liked !== undefined ? Boolean(foundTweet.liked) : (
+              Array.isArray(foundTweet?.likes) && currentUserId ? foundTweet.likes.includes(currentUserId) : false
+            )
+          ),
+          retweeted: (
+            foundTweet?.retweeted !== undefined ? Boolean(foundTweet.retweeted) : (
+              Array.isArray(foundTweet?.retweets) && currentUserId ? foundTweet.retweets.includes(currentUserId) : false
+            )
+          ),
+        };
+        setTweet(normalizedFound);
+        try {
+          const serverComments = await commentsAPI.getPostComments(tweetId, 1, 20);
+          const listRaw = Array.isArray(serverComments)
+            ? serverComments
+            : (serverComments?.comments || serverComments?.data || []);
+          // Try to enrich author info for comments (best-effort)
+          const list = await Promise.all(listRaw.map(async (c) => {
+            let author = c.author || c.user || null;
+            if ((!author || !author.username) && (c.authorId || c.userId)) {
+              try {
+                const u = await usersAPI.getUserById(c.authorId || c.userId);
+                if (u) author = { id: u.id || u._id, username: u.username, displayName: u.displayName || u.name || u.username, profilePicture: u.profilePicture };
+              } catch {}
+            }
+            const username = author?.username || c.username || (author?.id ? String(author.id).slice(0, 6) : 'user');
+            const displayName = author?.displayName || author?.name || username;
+            return { ...c, author: author ? { ...author, username, displayName } : { username, displayName } };
+          }));
+          setComments(list);
+        } catch (_) {
+          setComments(mockComments);
+        }
         setIsLoading(false);
         return;
       }
@@ -104,7 +149,7 @@ const TweetDetail = () => {
         const post = await postsAPI.getPostById(tweetId);
 
         // Map backend post -> UI tweet shape consumed by TweetDetailCard
-        const mapPostToTweet = async (p) => {
+  const mapPostToTweet = async (p) => {
           // Try to enrich author details
           let author = {
             id: p.authorId || p.author?.id || "unknown",
@@ -145,8 +190,16 @@ const TweetDetail = () => {
             replies: Number(
               (Array.isArray(p.replies) ? p.replies.length : p.replies) ?? 0
             ),
-            liked: Boolean(p.liked),
-            retweeted: Boolean(p.retweeted),
+            liked: (
+              p?.liked !== undefined ? Boolean(p.liked) : (
+                Array.isArray(p?.likes) && currentUserId ? p.likes.includes(currentUserId) : false
+              )
+            ),
+            retweeted: (
+              p?.retweeted !== undefined ? Boolean(p.retweeted) : (
+                Array.isArray(p?.retweets) && currentUserId ? p.retweets.includes(currentUserId) : false
+              )
+            ),
             poll: p.poll || null,
           };
         };
@@ -154,7 +207,27 @@ const TweetDetail = () => {
         const mapped = await mapPostToTweet(post);
         if (!isMounted) return;
         setTweet(mapped);
-        setComments(mockComments);
+        try {
+          const serverComments = await commentsAPI.getPostComments(tweetId, 1, 20);
+          const listRaw = Array.isArray(serverComments)
+            ? serverComments
+            : (serverComments?.comments || serverComments?.data || []);
+          const list = await Promise.all(listRaw.map(async (c) => {
+            let author = c.author || c.user || null;
+            if ((!author || !author.username) && (c.authorId || c.userId)) {
+              try {
+                const u = await usersAPI.getUserById(c.authorId || c.userId);
+                if (u) author = { id: u.id || u._id, username: u.username, displayName: u.displayName || u.name || u.username, profilePicture: u.profilePicture };
+              } catch {}
+            }
+            const username = author?.username || c.username || (author?.id ? String(author.id).slice(0, 6) : 'user');
+            const displayName = author?.displayName || author?.name || username;
+            return { ...c, author: author ? { ...author, username, displayName } : { username, displayName } };
+          }));
+          setComments(list);
+        } catch (_) {
+          setComments(mockComments);
+        }
       } catch (err) {
         console.warn("Failed to load post by id:", err);
         if (!isMounted) return;
@@ -170,11 +243,13 @@ const TweetDetail = () => {
     };
   }, [tweetId, tweets]);
 
-  const handleAddComment = (commentText) => {
-    const newComment = {
-      id: `comment-${Date.now()}`,
+  const handleAddComment = async (commentText) => {
+    // Optimistic UI
+    const tempId = `comment-${Date.now()}`;
+    const optimistic = {
+      id: tempId,
       author: {
-        id: 999, // Current user ID - would come from auth context
+        id: 999,
         displayName: "You",
         username: "you",
         verified: false,
@@ -187,8 +262,23 @@ const TweetDetail = () => {
       liked: false,
       parentId: tweetId,
     };
-
-    setComments((prev) => [newComment, ...prev]);
+    setComments((prev) => [optimistic, ...prev]);
+    // Increment replies stat optimistically
+    setTweet((prev) => prev ? { ...prev, replies: (prev.replies || 0) + 1 } : prev);
+    try {
+      const created = await commentsAPI.addComment(tweetId, { content: commentText });
+      // Replace optimistic with real comment
+      setComments((prev) => prev.map(c => c.id === tempId ? {
+        ...c,
+        id: created?.id || created?._id || tempId,
+        author: c.author, // could enrich later
+        createdAt: created?.createdAt || c.createdAt,
+      } : c));
+    } catch (err) {
+      // Revert on error
+      setComments((prev) => prev.filter(c => c.id !== tempId));
+      setTweet((prev) => prev ? { ...prev, replies: Math.max(0, (prev.replies || 0) - 1) } : prev);
+    }
   };
 
   const handleBack = () => {
@@ -235,6 +325,29 @@ const TweetDetail = () => {
     );
   }
 
+  const handleLike = async () => {
+    if (!tweet) return;
+    try {
+      await toggleLike(tweet.id, tweet.liked);
+      // sync local state to reflect latest like flag and count from context if needed
+      setTweet((prev) => prev ? { ...prev, liked: !prev.liked, likes: (prev.likes || 0) + (prev.liked ? -1 : 1) } : prev);
+    } catch (err) {
+      const msg = (err && (err.message || err)) || 'Failed to like post';
+      toast.error(typeof msg === 'string' ? msg : 'Failed to like post');
+    }
+  };
+
+  const handleRetweet = async () => {
+    if (!tweet) return;
+    try {
+      await toggleRetweet(tweet.id, tweet.retweeted);
+      setTweet((prev) => prev ? { ...prev, retweeted: !prev.retweeted, retweets: (prev.retweets || 0) + (prev.retweeted ? -1 : 1) } : prev);
+    } catch (err) {
+      const msg = (err && (err.message || err)) || 'Failed to retweet';
+      toast.error(typeof msg === 'string' ? msg : 'Failed to retweet');
+    }
+  };
+
   return (
     <div className="tweet-detail-page">
       <div className="tweet-detail-header">
@@ -247,11 +360,15 @@ const TweetDetail = () => {
       </div>
 
       <div className="tweet-detail-content">
-        <TweetDetailCard tweet={tweet} />
+  <TweetDetailCard tweet={tweet} onLike={handleLike} onRetweet={handleRetweet} />
 
         <div className="comment-section">
           <CommentComposer onSubmit={handleAddComment} />
-          <CommentList comments={comments} />
+          <CommentList
+            comments={comments}
+            postId={tweet.id}
+            onReplied={() => setTweet((prev) => prev ? { ...prev, replies: (prev.replies || 0) + 1 } : prev)}
+          />
         </div>
       </div>
     </div>

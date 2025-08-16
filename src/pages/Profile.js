@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { usersAPI, postsAPI } from "../services/api";
 import TweetCard from "../components/tweet/TweetCard";
@@ -16,26 +16,34 @@ const Profile = () => {
   const [tabLoading, setTabLoading] = useState(false);
   const navigate = useNavigate();
 
+  // Helper to fetch counts
+  const fetchFollowCounts = useMemo(() => async (uid) => {
+    try {
+      setLoading(true);
+      const data = await usersAPI.getFollowCounts(uid);
+      setStats(data);
+    } catch (error) {
+      console.error("Failed to fetch follow counts:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (!user || !user.id) return;
+    fetchFollowCounts(user.id);
+  }, [user, fetchFollowCounts]);
 
-    const fetchFollowCounts = async () => {
-      try {
-        setLoading(true);
-  const uid = user.id;
-  console.log("user id:", uid);
-  const data = await usersAPI.getFollowCounts(uid);
-        console.log("Follow counts:", data);
-        setStats(data);
-      } catch (error) {
-  console.error("Failed to fetch follow counts:", error);
-      } finally {
-        setLoading(false);
-      }
+  // Listen for global follow changes and refresh counts immediately
+  useEffect(() => {
+    const handler = (e) => {
+      if (!user?.id) return;
+      // Always re-fetch to reflect authoritative counts
+      fetchFollowCounts(user.id);
     };
-
-    fetchFollowCounts();
-  }, [user]);
+    window.addEventListener('follow:changed', handler);
+    return () => window.removeEventListener('follow:changed', handler);
+  }, [user, fetchFollowCounts]);
 
   useEffect(() => {
     if (!user || !user.id) return;
@@ -86,6 +94,9 @@ const Profile = () => {
           <div className="profile-details">
             <h1>{user.displayName || user.username}</h1>
             <p className="username">@{user.username}</p>
+            {user.bio && (
+              <p className="profile-bio">{user.bio}</p>
+            )}
 
             <div className="profile-stats">
               <div className="stat">

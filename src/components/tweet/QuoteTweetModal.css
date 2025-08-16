@@ -1,0 +1,8 @@
+.quote-modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:30}
+.quote-modal{background:#15181c;border:1px solid rgba(255,255,255,0.1);border-radius:12px;width:560px;max-width:90vw;padding:16px}
+.quote-input{width:100%;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e6e9ee;padding:10px}
+.quote-preview{margin-top:12px;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:10px;color:#b2b7bf}
+.quote-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+.btn{padding:8px 14px;border-radius:9999px;border:none;cursor:pointer}
+.btn.primary{background:#1d9bf0;color:#fff}
+.btn.secondary{background:transparent;color:#e6e9ee;border:1px solid rgba(255,255,255,0.2)}

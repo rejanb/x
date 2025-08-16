@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import toast from "../../utils/toast";
 import { useAuth } from "../../context/AuthContext";
 import "./CommentComposer.css";
 
@@ -10,11 +11,14 @@ const CommentComposer = ({ onSubmit }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (comment.trim()) {
-      onSubmit(comment.trim());
-      setComment("");
-      setIsExpanded(false);
+    const text = comment.trim();
+    if (!text) {
+      toast.error("Comment cannot be empty");
+      return;
     }
+    onSubmit(text);
+    setComment("");
+    setIsExpanded(false);
   };
 
   const handleFocus = () => {

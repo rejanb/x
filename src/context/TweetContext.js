@@ -4,6 +4,8 @@ import React, {
   useReducer,
   useCallback,
 } from "react";
+import { useAuth } from "./AuthContext";
+import { postsAPI } from "../services/api";
 
 // Tweet Context
 const TweetContext = createContext();
@@ -80,6 +82,10 @@ const tweetReducer = (state, action) => {
             ? { ...tweet, liked: true, likes: tweet.likes + 1 }
             : tweet
         ),
+        selectedTweet:
+          state.selectedTweet && state.selectedTweet.id === action.payload
+            ? { ...state.selectedTweet, liked: true, likes: state.selectedTweet.likes + 1 }
+            : state.selectedTweet,
       };
 
     case TWEET_ACTIONS.UNLIKE_TWEET:
@@ -90,6 +96,10 @@ const tweetReducer = (state, action) => {
             ? { ...tweet, liked: false, likes: tweet.likes - 1 }
             : tweet
         ),
+        selectedTweet:
+          state.selectedTweet && state.selectedTweet.id === action.payload
+            ? { ...state.selectedTweet, liked: false, likes: state.selectedTweet.likes - 1 }
+            : state.selectedTweet,
       };
 
     case TWEET_ACTIONS.RETWEET:
@@ -100,6 +110,10 @@ const tweetReducer = (state, action) => {
             ? { ...tweet, retweeted: true, retweets: tweet.retweets + 1 }
             : tweet
         ),
+        selectedTweet:
+          state.selectedTweet && state.selectedTweet.id === action.payload
+            ? { ...state.selectedTweet, retweeted: true, retweets: state.selectedTweet.retweets + 1 }
+            : state.selectedTweet,
       };
 
     case TWEET_ACTIONS.UNRETWEET:
@@ -110,6 +124,10 @@ const tweetReducer = (state, action) => {
             ? { ...tweet, retweeted: false, retweets: tweet.retweets - 1 }
             : tweet
         ),
+        selectedTweet:
+          state.selectedTweet && state.selectedTweet.id === action.payload
+            ? { ...state.selectedTweet, retweeted: false, retweets: state.selectedTweet.retweets - 1 }
+            : state.selectedTweet,
       };
 
     case TWEET_ACTIONS.ADD_REPLY:
@@ -120,6 +138,10 @@ const tweetReducer = (state, action) => {
             ? { ...tweet, replies: tweet.replies + 1 }
             : tweet
         ),
+        selectedTweet:
+          state.selectedTweet && state.selectedTweet.id === action.payload.tweetId
+            ? { ...state.selectedTweet, replies: state.selectedTweet.replies + 1 }
+            : state.selectedTweet,
       };
 
     case TWEET_ACTIONS.SET_SELECTED_TWEET:
@@ -208,6 +230,7 @@ const tweetReducer = (state, action) => {
 // Tweet Provider Component
 export const TweetProvider = ({ children }) => {
   const [state, dispatch] = useReducer(tweetReducer, initialState);
+  const { user } = useAuth();
 
   // Load tweets
   const loadTweets = useCallback(async (append = false) => {
@@ -313,27 +336,44 @@ export const TweetProvider = ({ children }) => {
   };
 
   // Like/Unlike tweet
-  const toggleLike = (tweetId, isLiked) => {
-    dispatch({
-      type: isLiked ? TWEET_ACTIONS.UNLIKE_TWEET : TWEET_ACTIONS.LIKE_TWEET,
-      payload: tweetId,
-    });
+  const toggleLike = async (tweetId, isLiked) => {
+    const userId = user?.id;
+    if (!userId) return; // silently ignore if not authenticated
+    // Optimistic update
+    dispatch({ type: isLiked ? TWEET_ACTIONS.UNLIKE_TWEET : TWEET_ACTIONS.LIKE_TWEET, payload: tweetId });
+    try {
+      if (isLiked) {
+        await postsAPI.unlikePost(tweetId, userId);
+      } else {
+        await postsAPI.likePost(tweetId, userId);
+      }
+    } catch (error) {
+      // Revert on error
+      dispatch({ type: !isLiked ? TWEET_ACTIONS.UNLIKE_TWEET : TWEET_ACTIONS.LIKE_TWEET, payload: tweetId });
+    }
   };
 
   // Retweet/Unretweet
-  const toggleRetweet = (tweetId, isRetweeted) => {
-    dispatch({
-      type: isRetweeted ? TWEET_ACTIONS.UNRETWEET : TWEET_ACTIONS.RETWEET,
-      payload: tweetId,
-    });
+  const toggleRetweet = async (tweetId, isRetweeted) => {
+    const userId = user?.id;
+    if (!userId) return; // silently ignore if not authenticated
+    // Optimistic update
+    dispatch({ type: isRetweeted ? TWEET_ACTIONS.UNRETWEET : TWEET_ACTIONS.RETWEET, payload: tweetId });
+    try {
+      if (isRetweeted) {
+        await postsAPI.unretweet(tweetId, userId);
+      } else {
+        await postsAPI.retweet(tweetId, userId);
+      }
+    } catch (error) {
+      // Revert on error
+      dispatch({ type: !isRetweeted ? TWEET_ACTIONS.UNRETWEET : TWEET_ACTIONS.RETWEET, payload: tweetId });
+    }
   };
 
   // Add reply
   const addReply = (tweetId, replyData) => {
-    dispatch({
-      type: TWEET_ACTIONS.ADD_REPLY,
-      payload: { tweetId, reply: replyData },
-    });
+    dispatch({ type: TWEET_ACTIONS.ADD_REPLY, payload: { tweetId, reply: replyData } });
   };
 
   // Set selected tweet

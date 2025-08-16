@@ -1,7 +1,8 @@
 import React from "react";
 import "./TrendingTopics.css";
 
-const TrendingTopics = ({ compact = false }) => {
+const TrendingTopics = ({ compact = false, data }) => {
+  // Default mock data (kept for fallback)
   const trendingData = [
     {
       category: "Technology",
@@ -53,7 +54,18 @@ const TrendingTopics = ({ compact = false }) => {
     },
   ];
 
-  const displayData = compact ? trendingData.slice(0, 5) : trendingData;
+  // If data prop provided, map to displayable items. Support backend trending hashtag shape
+  // { hashtag: 'programming', count: 150, posts: 45 }
+  const provided = Array.isArray(data) && data.length > 0
+    ? data.map((h) => ({
+        category: "Trending",
+        topic: h.topic || h.hashtag ? (h.hashtag?.startsWith('#') ? h.hashtag : `#${h.hashtag}`) : String(h.topic || ''),
+        tweets: Number(h.tweets ?? h.count ?? h.posts ?? 0),
+        trending: true,
+      }))
+    : trendingData;
+
+  const displayData = compact ? provided.slice(0, 5) : provided;
 
   const formatTweetCount = (count) => {
     if (count >= 1000000) {
