@@ -22,6 +22,7 @@ import Messages from "./pages/Messages";
 import Bookmarks from "./pages/Bookmarks";
 import EditProfile from "./pages/EditProfile";
 import ChangePassword from "./pages/ChangePassword";
+import NotificationManager from "./components/common/NotificationManager";
 import "./App.css";
 
 function App() {
@@ -31,6 +32,7 @@ function App() {
         <TweetProvider>
           <Router>
             <div className="App">
+              <NotificationManager />
               <Routes>
                 {/* Public Routes */}
                 <Route element={<PublicRoute />}>

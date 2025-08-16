@@ -99,11 +99,24 @@
   color: #14171a;
 }
 
+/* Inline message continuation for new_post */
+.tweet-inline-text {
+  font-size: 15px;
+  color: #14171a;
+  white-space: pre-wrap;
+}
+
+.time-inline {
+  margin-left: 8px;
+  font-size: 13px;
+  color: #657786;
+}
+
 .tweet-preview {
-  background-color: #f7f9fa;
-  border: 1px solid #e1e8ed;
-  border-radius: 8px;
-  padding: 12px;
+  /* background-color: #f7f9fa; */
+  /* border: 1px solid #e1e8ed; */
+  /* border-radius: 8px; */
+  /* padding: 12px; */
   margin-top: 8px;
   font-size: 14px;
   color: #14171a;
@@ -111,9 +124,18 @@
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2; /* Show up to ~3 lines visually */
   line-clamp: 3;
   -webkit-box-orient: vertical;
+}
+
+/* Inline text version for new_post preview */
+.tweet-inline {
+  margin-top: 4px;
+  font-size: 14px;
+  color: #536471;
+  line-height: 1.4;
+  white-space: pre-wrap;
 }
 
 .notification-time {
@@ -165,6 +187,10 @@
 
   .tweet-preview {
     padding: 10px;
+    font-size: 13px;
+  }
+
+  .tweet-inline {
     font-size: 13px;
   }
 

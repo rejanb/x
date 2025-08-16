@@ -4,6 +4,7 @@ import { useTweets } from "../context/TweetContext";
 import TweetDetailCard from "../components/tweet/TweetDetailCard";
 import CommentComposer from "../components/tweet/CommentComposer";
 import CommentList from "../components/tweet/CommentList";
+import { postsAPI, usersAPI } from "../services/api";
 import "./TweetDetail.css";
 
 const TweetDetail = () => {
@@ -84,21 +85,89 @@ const TweetDetail = () => {
   ];
 
   useEffect(() => {
-    // Find the tweet by ID
-    const foundTweet = tweets.find((t) => t.id.toString() === tweetId);
+    let isMounted = true;
+    const loadTweet = async () => {
+      setIsLoading(true);
 
-    if (foundTweet) {
-      setTweet(foundTweet);
-      setComments(mockComments);
-    } else {
-      // Tweet not found, could be from explore page or external
-      // In real app, you'd fetch from API
-      console.log(
-        "Tweet not found in current tweets, might need to fetch from API"
-      );
-    }
+      // First, try to find the tweet in context
+      const foundTweet = tweets.find((t) => t.id?.toString() === tweetId);
+      if (foundTweet) {
+        if (!isMounted) return;
+        setTweet(foundTweet);
+        setComments(mockComments);
+        setIsLoading(false);
+        return;
+      }
 
-    setIsLoading(false);
+      // Fallback: fetch from backend by ID
+      try {
+        const post = await postsAPI.getPostById(tweetId);
+
+        // Map backend post -> UI tweet shape consumed by TweetDetailCard
+        const mapPostToTweet = async (p) => {
+          // Try to enrich author details
+          let author = {
+            id: p.authorId || p.author?.id || "unknown",
+            username: p.author?.username || "user",
+            displayName: p.author?.displayName || p.author?.name || "User",
+            verified: Boolean(p.author?.verified),
+            profilePicture: p.author?.profilePicture || null,
+          };
+          try {
+            if (!p.author && p.authorId) {
+              const u = await usersAPI.getUserById(p.authorId);
+              if (u) {
+                author = {
+                  id: u.id || u._id || p.authorId,
+                  username: u.username || "user",
+                  displayName: u.displayName || u.name || u.username || "User",
+                  verified: Boolean(u.verified),
+                  profilePicture: u.profilePicture || null,
+                };
+              }
+            }
+          } catch (_) {
+            // keep minimal author if user fetch fails
+          }
+
+          return {
+            id: p.id || p._id || tweetId,
+            content: p.content || "",
+            author,
+            createdAt: p.createdAt || new Date().toISOString(),
+            images: p.images || p.media || [],
+            likes: Number(
+              (Array.isArray(p.likes) ? p.likes.length : p.likes) ?? 0
+            ),
+            retweets: Number(
+              (Array.isArray(p.retweets) ? p.retweets.length : p.retweets) ?? 0
+            ),
+            replies: Number(
+              (Array.isArray(p.replies) ? p.replies.length : p.replies) ?? 0
+            ),
+            liked: Boolean(p.liked),
+            retweeted: Boolean(p.retweeted),
+            poll: p.poll || null,
+          };
+        };
+
+        const mapped = await mapPostToTweet(post);
+        if (!isMounted) return;
+        setTweet(mapped);
+        setComments(mockComments);
+      } catch (err) {
+        console.warn("Failed to load post by id:", err);
+        if (!isMounted) return;
+        setTweet(null);
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    };
+
+    loadTweet();
+    return () => {
+      isMounted = false;
+    };
   }, [tweetId, tweets]);
 
   const handleAddComment = (commentText) => {

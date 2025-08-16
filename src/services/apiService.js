@@ -278,16 +278,18 @@ export const followAPI = {
 // Notification API functions
 export const notificationAPI = {
     getNotifications: async (page = 1, limit = 10) => {
-        const url = buildPaginatedUrl('/api/notifications', page, limit);
+    const url = buildPaginatedUrl('/api/notifications', page, limit, { t: Date.now() });
         return makeRequest('GET', url);
     },
     
     markAsRead: async (notificationId) => {
-        return makeRequest('PUT', `/api/notifications/${notificationId}/read`);
+    // Send an explicit empty JSON body to satisfy some parsers that reject a literal `null`
+    return makeRequest('PATCH', `/api/notifications/${notificationId}/read`, {});
     },
     
     markAllAsRead: async () => {
-        return makeRequest('PUT', '/api/notifications/read-all');
+        // Send an explicit empty JSON body
+        return makeRequest('PATCH', '/api/notifications/read-all', {});
     },
     
     deleteNotification: async (notificationId) => {
@@ -359,7 +361,7 @@ export const registerUser = authAPI.register;
 export { apiClient };
 
 // Export all APIs
-export default {
+const ApiService = {
     auth: authAPI,
     user: userAPI,
     post: postAPI,
@@ -371,3 +373,5 @@ export default {
     utils,
     client: apiClient
 };
+
+export default ApiService;

@@ -1,32 +1,47 @@
+// Resolve config from runtime/build env with safe fallbacks
+const runtimeEnv = (typeof window !== 'undefined' && window.__ENV__) || {};
+const ENV_API_BASE_URL =
+  runtimeEnv.API_BASE_URL ||
+  process.env.REACT_APP_API_BASE_URL ||
+  'http://localhost:3001';
+const ENV_WEBSOCKET_URL =
+  runtimeEnv.WEBSOCKET_URL ||
+  process.env.REACT_APP_WEBSOCKET_URL ||
+  ENV_API_BASE_URL;
+const ENV_PUSH_URL =
+  runtimeEnv.PUSH_NOTIFICATION_URL ||
+  process.env.REACT_APP_PUSH_NOTIFICATION_URL ||
+  ENV_API_BASE_URL;
+
 // Central configuration for API endpoints
 const CONFIG = {
   // Backend API base URL
-  API_BASE_URL: 'http://localhost:3001',
-  
+  API_BASE_URL: ENV_API_BASE_URL,
+
   // WebSocket URL (usually same as API base)
-  WEBSOCKET_URL: 'http://localhost:3001',
-  
+  WEBSOCKET_URL: ENV_WEBSOCKET_URL,
+
   // Push notification server URL
-  PUSH_NOTIFICATION_URL: 'http://localhost:3001',
-  
-  // Alternative URLs for different environments
+  PUSH_NOTIFICATION_URL: ENV_PUSH_URL,
+
+  // Alternative URLs for different environments (optional presets)
   ENVIRONMENTS: {
     development: {
       API_BASE_URL: 'http://localhost:3001',
       WEBSOCKET_URL: 'http://localhost:3001',
-      PUSH_NOTIFICATION_URL: 'http://localhost:3001'
+      PUSH_NOTIFICATION_URL: 'http://localhost:3001',
     },
     production: {
       API_BASE_URL: 'https://your-production-domain.com',
-      WEBSOCKET_URL: 'https://your-production-domain.com', 
-      PUSH_NOTIFICATION_URL: 'https://your-production-domain.com'
+      WEBSOCKET_URL: 'https://your-production-domain.com',
+      PUSH_NOTIFICATION_URL: 'https://your-production-domain.com',
     },
     network: {
       API_BASE_URL: 'http://10.110.195.86:3001',
       WEBSOCKET_URL: 'http://10.110.195.86:3001',
-      PUSH_NOTIFICATION_URL: 'http://10.110.195.86:3001'
-    }
-  }
+      PUSH_NOTIFICATION_URL: 'http://10.110.195.86:3001',
+    },
+  },
 };
 
 // Helper function to get current environment URLs
