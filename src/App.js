@@ -7,6 +7,7 @@ import {
 } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { TweetProvider } from "./context/TweetContext";
+import { RealTimeProvider } from "./context/RealTimeContext";
 import PublicRoute from "./components/common/PublicRoute";
 import PrivateRoute from "./components/common/PrivateRoute";
 import Layout from "./components/common/Layout";
@@ -26,38 +27,40 @@ import "./App.css";
 function App() {
   return (
     <AuthProvider>
-      <TweetProvider>
-        <Router>
-          <div className="App">
-            <Routes>
-              {/* Public Routes */}
-              <Route element={<PublicRoute />}>
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-              </Route>
-
-              {/* Private Routes */}
-              <Route element={<PrivateRoute />}>
-                <Route element={<Layout />}>
-                  <Route path="/home" element={<Home />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="/profile/edit" element={<EditProfile />} />
-                  <Route path="/explore" element={<Explore />} />
-                  <Route path="/notifications" element={<Notifications />} />
-                  <Route path="/tweet/:tweetId" element={<TweetDetail />} />
-                  <Route path="/messages" element={<Messages />} />
-                  <Route path="/bookmarks" element={<Bookmarks />} />
-                  <Route path="/change-password" element={<ChangePassword />} />
+      <RealTimeProvider>
+        <TweetProvider>
+          <Router>
+            <div className="App">
+              <Routes>
+                {/* Public Routes */}
+                <Route element={<PublicRoute />}>
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
                 </Route>
-              </Route>
 
-              {/* Default redirect */}
-              <Route path="/" element={<Navigate to="/home" replace />} />
-              <Route path="*" element={<Navigate to="/home" replace />} />
-            </Routes>
-          </div>
-        </Router>
-      </TweetProvider>
+                {/* Private Routes */}
+                <Route element={<PrivateRoute />}>
+                  <Route element={<Layout />}>
+                    <Route path="/home" element={<Home />} />
+                    <Route path="/profile" element={<Profile />} />
+                    <Route path="/profile/edit" element={<EditProfile />} />
+                    <Route path="/explore" element={<Explore />} />
+                    <Route path="/notifications" element={<Notifications />} />
+                    <Route path="/tweet/:tweetId" element={<TweetDetail />} />
+                    <Route path="/messages" element={<Messages />} />
+                    <Route path="/bookmarks" element={<Bookmarks />} />
+                    <Route path="/change-password" element={<ChangePassword />} />
+                  </Route>
+                </Route>
+
+                {/* Default redirect */}
+                <Route path="/" element={<Navigate to="/home" replace />} />
+                <Route path="*" element={<Navigate to="/home" replace />} />
+              </Routes>
+            </div>
+          </Router>
+        </TweetProvider>
+      </RealTimeProvider>
     </AuthProvider>
   );
 }

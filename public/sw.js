@@ -23,10 +23,15 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = new URL(req.url);
+  
+  // Skip caching for unsupported schemes (chrome-extension, moz-extension, etc.)
+  if (!url.protocol.startsWith('http')) {
+    return;
+  }
+  
   if (url.pathname.startsWith('/api')) {
     event.respondWith(networkFirst(req));
   } else {
@@ -34,20 +39,112 @@ self.addEventListener('fetch', (event) => {
   }
 });
 
+// Push notification event listener
+self.addEventListener('push', (event) => {
+  console.log('Push event received:', event);
+  
+  let notificationData = {
+    title: 'Twitter Clone',
+    body: 'You have a new notification',
+    icon: '/icons/icon-192x192.png',
+    badge: '/icons/icon-192x192.png',
+    tag: 'default',
+    data: { url: '/' }
+  };
+
+  if (event.data) {
+    try {
+      const data = event.data.json();
+      notificationData = { ...notificationData, ...data };
+    } catch (error) {
+      console.error('Error parsing push data:', error);
+      notificationData.body = event.data.text();
+    }
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(notificationData.title, {
+      body: notificationData.body,
+      icon: notificationData.icon,
+      badge: notificationData.badge,
+      tag: notificationData.tag,
+      data: notificationData.data,
+      actions: [
+        {
+          action: 'open',
+          title: 'Open App'
+        },
+        {
+          action: 'close',
+          title: 'Dismiss'
+        }
+      ],
+      requireInteraction: false
+    })
+  );
+});
+
+// Notification click event listener
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  if (event.action === 'close') {
+    return;
+  }
+
+  const urlToOpen = event.notification.data?.url || '/';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // Check if app is already open
+      for (const client of clientList) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          client.focus();
+          client.navigate(urlToOpen);
+          return;
+        }
+      }
+      
+      // Open new window/tab if app is not open
+      if (clients.openWindow) {
+        return clients.openWindow(self.location.origin + urlToOpen);
+      }
+    })
+  );
+});
+
 async function cacheFirst(req) {
+  // Skip caching for unsupported schemes
+  const url = new URL(req.url);
+  if (!url.protocol.startsWith('http')) {
+    return fetch(req);
+  }
+  
   const cache = await caches.open(CACHE_NAME);
   const cached = await cache.match(req);
   if (cached) return cached;
   const fresh = await fetch(req);
-  cache.put(req, fresh.clone());
+  // Only cache GET requests
+  if (req.method === 'GET') {
+    cache.put(req, fresh.clone());
+  }
   return fresh;
 }
 
 async function networkFirst(req) {
+  // Skip caching for unsupported schemes
+  const url = new URL(req.url);
+  if (!url.protocol.startsWith('http')) {
+    return fetch(req);
+  }
+  
   const cache = await caches.open(CACHE_NAME);
   try {
     const fresh = await fetch(req);
-    cache.put(req, fresh.clone());
+    // Only cache GET requests - POST/PUT/DELETE should not be cached
+    if (req.method === 'GET') {
+      cache.put(req, fresh.clone());
+    }
     return fresh;
   } catch (e) {
     const cached = await cache.match(req);

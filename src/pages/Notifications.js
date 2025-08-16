@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import NotificationTabs from "../components/notifications/NotificationTabs";
 import NotificationList from "../components/notifications/NotificationList";
+import PushNotificationSettings from "../components/notifications/PushNotificationSettings";
+import { useRealTime } from "../context/RealTimeContext";
 import "./Notifications.css";
 
 const Notifications = () => {
@@ -8,9 +10,12 @@ const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const { notifications: realTimeNotifications } = useRealTime();
+  const { notifications: liveNotifications, clearAllNotifications } = useRealTime();
 
   const tabs = [
     { key: "all", label: "All", count: null },
+    { key: "settings", label: "Settings", count: null },
     { key: "verified", label: "Verified", count: null },
     { key: "mentions", label: "Mentions", count: null },
   ];
@@ -141,15 +146,18 @@ const Notifications = () => {
   ];
 
   useEffect(() => {
+    // Combine real-time notifications with mock data
+    const allNotifications = [...liveNotifications, ...mockNotifications];
+    
     // Simulate loading
     const timer = setTimeout(() => {
-      setNotifications(mockNotifications);
-      setUnreadCount(mockNotifications.filter((n) => !n.read).length);
+      setNotifications(allNotifications);
+      setUnreadCount(allNotifications.filter((n) => !n.read).length);
       setIsLoading(false);
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [liveNotifications]);
 
   const filteredNotifications = notifications.filter((notification) => {
     switch (activeTab) {
@@ -194,15 +202,21 @@ const Notifications = () => {
       />
 
       <div className="notifications-content">
-        {isLoading ? (
-          <div className="loading-notifications">
-            <div className="loading-spinner">Loading notifications...</div>
-          </div>
+        {activeTab === 'settings' ? (
+          <PushNotificationSettings />
         ) : (
-          <NotificationList
-            notifications={filteredNotifications}
-            onMarkAsRead={markAsRead}
-          />
+          <>
+            {isLoading ? (
+              <div className="loading-notifications">
+                <div className="loading-spinner">Loading notifications...</div>
+              </div>
+            ) : (
+              <NotificationList
+                notifications={filteredNotifications}
+                onMarkAsRead={markAsRead}
+              />
+            )}
+          </>
         )}
       </div>
     </div>

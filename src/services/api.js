@@ -1,7 +1,9 @@
-import axios from "axios";
+import axios from 'axios';
+import { API_BASE_URL } from '../config/apiConfig';
 
 // Base API URL from environment variables
-const BASE_URL ="https://twitter-clone-backend-lpjd.onrender.com/api";
+// const BASE_URL ="https://twitter-clone-backend-lpjd.onrender.com/api";
+const BASE_URL = `${API_BASE_URL}/api`;
 
 // Create axios instance with default configuration
 const apiClient = axios.create({

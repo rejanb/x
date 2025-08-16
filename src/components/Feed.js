@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { postsAPI } from '../services/api';
+import { useRealTime } from '../context/RealTimeContext';
 import CreatePost from './CreatePost';
 import './Feed.css';
 import TweetCard from './tweet/TweetCard';
@@ -12,6 +13,7 @@ const Feed = () => {
   const [hasMore, setHasMore] = useState(true);
   const [backendStatus, setBackendStatus] = useState('checking');
   const [lastApiResponse, setLastApiResponse] = useState(null);
+  const { isConnected, newPostsCount, clearNewPostsCount } = useRealTime();
 
   const fetchPosts = async (pageNum = 1, append = false) => {
     try {
@@ -46,7 +48,7 @@ const Feed = () => {
     // Check backend status first
     const checkBackendStatus = async () => {
       try {
-        const response = await fetch('http://localhost:3000/api/posts?page=1&limit=1');
+        const response = await fetch('http://localhost:3001/api/posts?page=1&limit=1');
         if (response.ok) {
           setBackendStatus('connected');
           fetchPosts(1, false);
@@ -63,6 +65,49 @@ const Feed = () => {
     checkBackendStatus();
   }, []);
 
+  // Real-time event listeners
+  useEffect(() => {
+    const handleNewPost = (event) => {
+      const newPost = event.detail;
+      setPosts(prev => {
+        // Check if post already exists to avoid duplicates
+        if (prev.some(post => (post._id || post.id) === (newPost._id || newPost.id))) {
+          return prev;
+        }
+        return [newPost, ...prev];
+      });
+    };
+
+    const handlePostUpdate = (event) => {
+      const { postId, updateType, data } = event.detail;
+      setPosts(prev => prev.map(post => {
+        if ((post._id || post.id) === postId) {
+          switch (updateType) {
+            case 'like':
+              return { ...post, likes: [...(post.likes || []), data.userId] };
+            case 'unlike':
+              return { ...post, likes: (post.likes || []).filter(id => id !== data.userId) };
+            case 'reply':
+              return { ...post, replies: [...(post.replies || []), data.replyId] };
+            default:
+              return post;
+          }
+        }
+        return post;
+      }));
+    };
+
+    // Add event listeners
+    window.addEventListener('newPostReceived', handleNewPost);
+    window.addEventListener('postUpdateReceived', handlePostUpdate);
+
+    return () => {
+      // Cleanup event listeners
+      window.removeEventListener('newPostReceived', handleNewPost);
+      window.removeEventListener('postUpdateReceived', handlePostUpdate);
+    };
+  }, []);
+
   const handlePostCreated = (newPost) => {
     setPosts(prev => [newPost, ...prev]);
   };
@@ -75,6 +120,7 @@ const Feed = () => {
 
   const refreshPosts = () => {
     fetchPosts(1, false);
+    clearNewPostsCount();
   };
 
   if (error) {
@@ -97,6 +143,14 @@ const Feed = () => {
             {backendStatus === 'error' && '🟡 Backend Error'}
             {backendStatus === 'checking' && '🟡 Checking...'}
           </div>
+          <div className={`websocket-status ${isConnected ? 'connected' : 'disconnected'}`}>
+            {isConnected ? '🔗 Real-time Connected' : '❌ Real-time Disconnected'}
+          </div>
+          {newPostsCount > 0 && (
+            <div className="new-posts-indicator" onClick={refreshPosts}>
+              {newPostsCount} new post{newPostsCount !== 1 ? 's' : ''} available - Click to refresh
+            </div>
+          )}
         </div>
         <div className="header-buttons">
           <button 

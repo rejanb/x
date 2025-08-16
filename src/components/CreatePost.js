@@ -1,8 +1,10 @@
 import React, { useRef, useState } from 'react';
 import { postsAPI } from '../services/api';
+import { useRealTime } from '../context/RealTimeContext';
 import './CreatePost.css';
 
 const CreatePost = ({ onPostCreated }) => {
+  const { showTestNotification } = useRealTime();
   const [content, setContent] = useState('');
   const [files, setFiles] = useState([]);
   const [isPoll, setIsPoll] = useState(false);
@@ -167,8 +169,15 @@ const CreatePost = ({ onPostCreated }) => {
         onPostCreated(result);
       }
 
+      // Show notification for successful post creation
+      if (showTestNotification && result) {
+        const postContent = result.content || content;
+        showTestNotification('post', `You posted: "${postContent.substring(0, 50)}${postContent.length > 50 ? '...' : ''}"`);
+      }
+
       // Show success message
-      alert('Post created successfully!');
+      console.log('✅ Post created successfully!');
+      // Removed alert to avoid interrupting the flow
 
     } catch (error) {
       console.error('❌ Error creating post:', error);
