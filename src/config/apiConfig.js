@@ -1,20 +1,20 @@
 // Central configuration for API endpoints
 const CONFIG = {
   // Backend API base URL
-  API_BASE_URL: 'http://localhost:3000',
+  API_BASE_URL: 'http://localhost:3001',
   
   // WebSocket URL (usually same as API base)
-  WEBSOCKET_URL: 'http://localhost:3000',
+  WEBSOCKET_URL: 'http://localhost:3001',
   
   // Push notification server URL
-  PUSH_NOTIFICATION_URL: 'http://localhost:3000',
+  PUSH_NOTIFICATION_URL: 'http://localhost:3001',
   
   // Alternative URLs for different environments
   ENVIRONMENTS: {
     development: {
-      API_BASE_URL: 'http://localhost:3000',
-      WEBSOCKET_URL: 'http://localhost:3000',
-      PUSH_NOTIFICATION_URL: 'http://localhost:3000'
+      API_BASE_URL: 'http://localhost:3001',
+      WEBSOCKET_URL: 'http://localhost:3001',
+      PUSH_NOTIFICATION_URL: 'http://localhost:3001'
     },
     production: {
       API_BASE_URL: 'https://your-production-domain.com',
@@ -22,9 +22,9 @@ const CONFIG = {
       PUSH_NOTIFICATION_URL: 'https://your-production-domain.com'
     },
     network: {
-      API_BASE_URL: 'http://10.110.195.86:3000',
-      WEBSOCKET_URL: 'http://10.110.195.86:3000',
-      PUSH_NOTIFICATION_URL: 'http://10.110.195.86:3000'
+      API_BASE_URL: 'http://10.110.195.86:3001',
+      WEBSOCKET_URL: 'http://10.110.195.86:3001',
+      PUSH_NOTIFICATION_URL: 'http://10.110.195.86:3001'
     }
   }
 };
