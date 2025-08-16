@@ -1,8 +1,12 @@
 import React, { useRef, useState } from 'react';
 import { postsAPI } from '../services/api';
+import { useRealTime } from '../context/RealTimeContext';
+import { useAuth } from '../context/AuthContext';
 import './CreatePost.css';
 
 const CreatePost = ({ onPostCreated }) => {
+  const { showTestNotification } = useRealTime();
+  const { user } = useAuth();
   const [content, setContent] = useState('');
   const [files, setFiles] = useState([]);
   const [isPoll, setIsPoll] = useState(false);
@@ -90,6 +94,12 @@ const CreatePost = ({ onPostCreated }) => {
     e.preventDefault();
     if (!canPost) return;
 
+    // Check if user is authenticated and has an ID
+    if (!user || !user.id) {
+      alert('You must be logged in to create a post');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -109,7 +119,7 @@ const CreatePost = ({ onPostCreated }) => {
           question: pollQuestion,
           options: pollOptions.filter(opt => opt.trim() !== ''),
           expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-          userId: 'test-user-123' // Hardcoded for now
+          userId: user?.id // Use actual user ID
         };
 
         console.log('🔍 Creating poll post:', { content: cleanContent, pollData });
@@ -117,7 +127,7 @@ const CreatePost = ({ onPostCreated }) => {
         // For now, create post with poll data embedded
         const postData = {
           content: cleanContent || pollQuestion,
-          authorId: 'test-user-123',
+          authorId: user?.id, // Use actual user ID
           hashtags: hashtags.map(tag => tag.slice(1)), // Remove # symbol
           mentions: mentions.map(mention => mention.slice(1)), // Remove @ symbol
           poll: pollData
@@ -131,7 +141,7 @@ const CreatePost = ({ onPostCreated }) => {
           // Post with media
           const postData = {
             content: cleanContent,
-            authorId: 'test-user-123',
+            authorId: user?.id, // Use actual user ID
             hashtags: hashtags.map(tag => tag.slice(1)),
             mentions: mentions.map(mention => mention.slice(1))
           };
@@ -143,7 +153,7 @@ const CreatePost = ({ onPostCreated }) => {
           // Text-only post
           const postData = {
             content: cleanContent,
-            authorId: 'test-user-123',
+            authorId: user?.id, // Use actual user ID
             hashtags: hashtags.map(tag => tag.slice(1)),
             mentions: mentions.map(mention => mention.slice(1))
           };
@@ -167,8 +177,15 @@ const CreatePost = ({ onPostCreated }) => {
         onPostCreated(result);
       }
 
+      // Show notification for successful post creation
+      if (showTestNotification && result) {
+        const postContent = result.content || content;
+        showTestNotification('post', `You posted: "${postContent.substring(0, 50)}${postContent.length > 50 ? '...' : ''}"`);
+      }
+
       // Show success message
-      alert('Post created successfully!');
+      console.log('✅ Post created successfully!');
+      // Removed alert to avoid interrupting the flow
 
     } catch (error) {
       console.error('❌ Error creating post:', error);
@@ -188,7 +205,7 @@ const CreatePost = ({ onPostCreated }) => {
     <div className="create-post">
       <div className="post-header">
         <div className="user-avatar">
-          <span>T</span>
+          <span>{user?.username?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || 'U'}</span>
         </div>
         <div className="post-input-container">
           <textarea

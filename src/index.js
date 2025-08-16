@@ -16,8 +16,16 @@ root.render(
 // or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
 reportWebVitals();
 
+// Service Worker behavior: register in production, unregister in development
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(console.error);
+    if (process.env.NODE_ENV === 'production') {
+      navigator.serviceWorker.register('/sw.js').catch(console.error);
+    } else {
+      // Keep dev free of stale caches
+      navigator.serviceWorker.getRegistrations().then((regs) => {
+        regs.forEach((r) => r.unregister());
+      });
+    }
   });
 }

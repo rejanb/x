@@ -1,7 +1,9 @@
-import axios from "axios";
+import axios from 'axios';
+import { API_BASE_URL } from '../config/apiConfig';
 
 // Base API URL from environment variables
-const BASE_URL ="https://twitter-clone-backend-lpjd.onrender.com/api";
+// const BASE_URL ="https://twitter-clone-backend-lpjd.onrender.com/api";
+const BASE_URL = `${API_BASE_URL}/api`;
 
 // Create axios instance with default configuration
 const apiClient = axios.create({
@@ -195,6 +197,33 @@ export const postsAPI = {
             throw error.response?.data || error.message;
         }
     },
+    // Get posts by author via PostsController findAll (filter authorId)
+    getPostsByAuthor: async (userId, page = 1, limit = 10) => {
+        try {
+            if (!userId) throw new Error("authorId is required");
+            const params = new URLSearchParams({
+                page: String(page),
+                limit: String(limit),
+                authorId: String(userId),
+            });
+            const response = await apiClient.get(`/posts?${params.toString()}`);
+            return response.data; // { posts, total, page, limit }
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    // Get posts liked by a user
+    getLikedPosts: async (userId, page = 1, limit = 10) => {
+        try {
+            const response = await apiClient.get(
+                `/posts/liked?userId=${encodeURIComponent(userId)}&page=${page}&limit=${limit}`
+            );
+            return response.data; // { posts, total, page, limit }
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
 };
 
 // Polls API functions
@@ -283,6 +312,15 @@ export const commentsAPI = {
 
 // Users API functions
 export const usersAPI = {
+    // Helper to get current user id from localStorage
+    _getCurrentUserId: () => {
+        try {
+            const raw = localStorage.getItem("user");
+            return raw ? JSON.parse(raw)?.id : null;
+        } catch (_) {
+            return null;
+        }
+    },
 
     getFollowCounts: async (userId) => {
         try {
@@ -296,6 +334,16 @@ export const usersAPI = {
 
     // Get user profile
     getUserProfile: async (userId) => {
+        try {
+            const response = await apiClient.get(`/users/${userId}`);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    // Get user by ID (alias for getUserProfile)
+    getUserById: async (userId) => {
         try {
             const response = await apiClient.get(`/users/${userId}`);
             return response.data;
@@ -337,12 +385,51 @@ export const usersAPI = {
         }
     },
 
-    // Follow/Unfollow user
-    toggleFollow: async (userId) => {
+    // Follow a user
+    followUser: async (userId, followerIdOverride) => {
         try {
-            const response = await apiClient.post(`/users/${userId}/follow`);
+            const followerId = followerIdOverride || usersAPI._getCurrentUserId();
+            if (!followerId) throw new Error("Not authenticated");
+            const response = await apiClient.post(`/users/${userId}/follow`, { followerId });
             return response.data;
         } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    // Unfollow a user
+    unfollowUser: async (userId, followerIdOverride) => {
+        try {
+            const followerId = followerIdOverride || usersAPI._getCurrentUserId();
+            if (!followerId) throw new Error("Not authenticated");
+            // axios.delete needs the body in the `data` option
+            const response = await apiClient.delete(`/users/${userId}/follow`, {
+                data: { followerId },
+            });
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    // Toggle follow by explicit state or optimistic attempt
+    toggleFollow: async (userId, isFollowing = undefined) => {
+        const followerId = usersAPI._getCurrentUserId();
+        if (!followerId) throw new Error("Not authenticated");
+        if (isFollowing === true) {
+            return usersAPI.unfollowUser(userId, followerId);
+        }
+        if (isFollowing === false) {
+            return usersAPI.followUser(userId, followerId);
+        }
+        try {
+            return await usersAPI.followUser(userId, followerId);
+        } catch (error) {
+            const status = error?.response?.status;
+            const msg = (error?.message || "").toLowerCase();
+            if (status === 409 || msg.includes("already")) {
+                return await usersAPI.unfollowUser(userId, followerId);
+            }
             throw error.response?.data || error.message;
         }
     },
@@ -378,6 +465,21 @@ export const usersAPI = {
                 `/users/search?q=${query}&page=${page}&limit=${limit}`
             );
             return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    // List users (with pagination and optional search)
+    listUsers: async (page = 1, limit = 10, search) => {
+        try {
+            const params = new URLSearchParams();
+            if (page) params.set('page', String(page));
+            if (limit) params.set('limit', String(limit));
+            if (search) params.set('search', search);
+            const qs = params.toString();
+            const response = await apiClient.get(`/users${qs ? `?${qs}` : ''}`);
+            return response.data; // { users, total, page, limit, totalPages }
         } catch (error) {
             throw error.response?.data || error.message;
         }

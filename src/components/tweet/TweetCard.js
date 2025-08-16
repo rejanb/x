@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useTweets } from "../../context/TweetContext";
 import { useConfirmationDialog } from "../../hooks/useConfirmationDialog";
+import { userAPI } from "../../services/apiService";
 import ConfirmationDialog from "../common/ConfirmationDialog";
 import HashtagText from "../common/HashtagText";
 import Poll from "./Poll";
@@ -13,20 +14,69 @@ const TweetCard = ({ tweet }) => {
   const { toggleLike, toggleRetweet, deleteTweet } = useTweets();
   const { isOpen, dialogConfig, showConfirmation } = useConfirmationDialog();
   const navigate = useNavigate();
+  const [author, setAuthor] = useState(null);
+  const [authorLoading, setAuthorLoading] = useState(true);
+
+  // Get the correct ID field - do this before hooks but after state initialization
+  const tweetId = tweet?._id || tweet?.id;
+  const authorId = tweet?.authorId || 'unknown';
+  const content = tweet?.content || '';
+  const createdAt = tweet?.createdAt || new Date();
+  const media = tweet?.media || [];
+  const poll = tweet?.poll || null;
+
+  // Fetch author information - this hook must come before any early returns
+  useEffect(() => {
+    const fetchAuthor = async () => {
+      if (!authorId || authorId === 'unknown') {
+        setAuthorLoading(false);
+        return;
+      }
+
+      // If this is the current user's post, use their info from auth context
+      if (user && user.id === authorId) {
+        setAuthor({
+          id: user.id,
+          username: user.username,
+          displayName: user.displayName || user.username,
+          email: user.email,
+        });
+        setAuthorLoading(false);
+        return;
+      }
+
+      try {
+        const authorData = await userAPI.getUserById(authorId);
+        setAuthor(authorData);
+      } catch (error) {
+        console.warn('Author not found, using fallback data:', error);
+        // Create fallback author data for deleted/missing users
+        const fallbackUsername = authorId.includes('-') ? 
+          `user_${authorId.split('-')[0]}` : // Use part of UUID
+          authorId.replace('test-user-', 'test_user_'); // Clean up test IDs
+          
+        setAuthor({
+          id: authorId,
+          username: fallbackUsername,
+          displayName: `Unknown User`,
+          email: null,
+          bio: 'This user no longer exists',
+          avatarUrl: null,
+          isDeleted: true // Flag to style differently
+        });
+      } finally {
+        setAuthorLoading(false);
+      }
+    };
+
+    fetchAuthor();
+  }, [authorId, user]);
 
   // Add safety check for tweet object AFTER hooks
   if (!tweet || typeof tweet !== 'object') {
     console.warn('TweetCard received invalid tweet:', tweet);
     return null;
   }
-
-  // Get the correct ID field
-  const tweetId = tweet._id || tweet.id;
-  const authorId = tweet.authorId || 'unknown';
-  const content = tweet.content || '';
-  const createdAt = tweet.createdAt || new Date();
-  const media = tweet.media || [];
-  const poll = tweet.poll || null;
 
   const handleTweetClick = (e) => {
     // Don't navigate if clicking on action buttons
@@ -79,19 +129,41 @@ const TweetCard = ({ tweet }) => {
 
   const isOwner = user && user.id === authorId;
 
+  // Show loading state while fetching author
+  if (authorLoading) {
+    return (
+      <div className="tweet-card loading">
+        <div className="tweet-header">
+          <div className="tweet-avatar">
+            <div className="avatar-placeholder">...</div>
+          </div>
+          <div className="tweet-info">
+            <div className="tweet-author">
+              <span className="display-name">Loading...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const displayName = author?.displayName || author?.username || 'Unknown User';
+  const usernameDisplay = author?.username || 'unknown';
+  const avatarLetter = displayName.charAt(0).toUpperCase();
+
   return (
     <div className="tweet-card" style={{ cursor: "pointer" }}>
       <div className="tweet-header">
         <div className="tweet-avatar">
           <div className="avatar-placeholder">
-            {authorId.charAt(0).toUpperCase()}
+            {avatarLetter}
           </div>
         </div>
 
         <div className="tweet-info">
           <div className="tweet-author">
-            <span className="display-name">{authorId}</span>
-            <span className="username">@{authorId}</span>
+            <span className="display-name">{displayName}</span>
+            <span className="username">@{usernameDisplay}</span>
             <span className="timestamp" onClick={handleTweetClick}>
               · {formatTime(createdAt)}
             </span>

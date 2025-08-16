@@ -18,7 +18,7 @@ const AUTH_ACTIONS = {
 const initialState = {
   user: null,
   isAuthenticated: false,
-  isLoading: false,
+  isLoading: true, // Start as true to prevent flash of login page
   error: null,
   token: null, // <-- store JWT here
 };
@@ -79,7 +79,11 @@ export const AuthProvider = ({ children }) => {
         console.error("Error parsing user data:", error);
         localStorage.removeItem("token");
         localStorage.removeItem("user");
+        dispatch({ type: AUTH_ACTIONS.SET_USER, payload: { user: null, token: null } });
       }
+    } else {
+      // No auth found, stop loading
+      dispatch({ type: AUTH_ACTIONS.SET_USER, payload: { user: null, token: null } });
     }
   }, []);
 
@@ -116,6 +120,7 @@ export const AuthProvider = ({ children }) => {
       const response = await authAPI.register(userData);
 
       const user = {
+        id: response.userId,
         username: response.username,
         email: response.email,
       };
