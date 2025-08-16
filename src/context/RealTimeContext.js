@@ -13,10 +13,11 @@ export const useRealTime = () => {
 };
 
 export const RealTimeProvider = ({ children }) => {
-  const { user, token } = useAuth();
+  const { user, token, logout } = useAuth(); // Add logout from useAuth
   const [isConnected, setIsConnected] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [newPostsCount, setNewPostsCount] = useState(0);
+  const [authError, setAuthError] = useState(null); // Add auth error state
   const [pushNotificationStatus, setPushNotificationStatus] = useState({
     isSupported: false,
     permission: 'default',
@@ -62,7 +63,11 @@ export const RealTimeProvider = ({ children }) => {
   };
 
   useEffect(() => {
+    console.log('🔄 RealTimeContext: Effect running with token:', token ? 'yes' : 'no', 'user:', user ? user.id : 'none');
+    
     if (token && user) {
+      console.log('🚀 RealTimeContext: Initializing WebSocket connection for user:', user.id);
+      
       // Initialize push notifications with dynamic import to avoid webpack cache issues
       const initPushNotifications = async () => {
         try {
@@ -92,11 +97,14 @@ export const RealTimeProvider = ({ children }) => {
       initPushNotifications();
 
       // Connect to WebSocket
+      console.log('🔌 RealTimeContext: Connecting to WebSocket...');
       websocketService.connect(token);
       
       // Listen for connection status
       const handleConnectionStatus = () => {
-        setIsConnected(websocketService.isSocketConnected());
+        const connected = websocketService.isSocketConnected();
+        console.log('🔄 RealTimeContext: Connection status changed:', connected);
+        setIsConnected(connected);
       };
 
       // Listen for new posts
@@ -232,6 +240,26 @@ export const RealTimeProvider = ({ children }) => {
         }
       };
 
+      // Listen for authentication errors
+      const handleAuthError = (error) => {
+        console.log('🚨 RealTimeContext: Auth error received:', error);
+        setAuthError(error);
+        setIsConnected(false);
+        
+        // Show user-friendly notification
+        if (Notification.permission === 'granted') {
+          new Notification('🔑 Session Expired', {
+            body: error.message || 'Your session has expired. Please log in again to continue receiving real-time updates.',
+            icon: '/icons/icon-192x192.png',
+            tag: 'auth-error',
+            requireInteraction: true
+          });
+        }
+        
+        // Stop further reconnection attempts
+        websocketService.disconnect();
+      };
+
       // Register event listeners
       websocketService.on('connect', handleConnectionStatus);
       websocketService.on('disconnect', handleConnectionStatus);
@@ -239,11 +267,15 @@ export const RealTimeProvider = ({ children }) => {
       websocketService.on('postUpdate', handlePostUpdate);
       websocketService.on('notification', handleNotification);
       websocketService.on('realTimeNotification', handleRealTimeNotification);
+      websocketService.on('authError', handleAuthError); // Add auth error listener
 
       // Set initial connection status
       handleConnectionStatus();
 
+      console.log('✅ RealTimeContext: All event listeners registered and initial connection status set');
+
       return () => {
+        console.log('🧹 RealTimeContext: Cleaning up WebSocket connection');
         // Cleanup listeners
         websocketService.off('connect', handleConnectionStatus);
         websocketService.off('disconnect', handleConnectionStatus);
@@ -251,10 +283,14 @@ export const RealTimeProvider = ({ children }) => {
         websocketService.off('postUpdate', handlePostUpdate);
         websocketService.off('notification', handleNotification);
         websocketService.off('realTimeNotification', handleRealTimeNotification);
+        websocketService.off('authError', handleAuthError); // Clean up auth error listener
         
         // Disconnect WebSocket
         websocketService.disconnect();
+        console.log('✅ RealTimeContext: Cleanup completed');
       };
+    } else {
+      console.log('⏭️ RealTimeContext: Skipping WebSocket initialization - missing token or user');
     }
   }, [token, user]);
 
@@ -367,13 +403,19 @@ export const RealTimeProvider = ({ children }) => {
     }
   };
 
+  const clearAuthError = () => {
+    setAuthError(null);
+  };
+
   const value = {
     isConnected,
     notifications,
     newPostsCount,
+    authError, // Add auth error to context
     clearNewPostsCount,
     markNotificationAsRead,
     clearAllNotifications,
+    clearAuthError, // Add clear auth error function
     websocketService,
     pushNotificationStatus,
     enablePushNotifications,

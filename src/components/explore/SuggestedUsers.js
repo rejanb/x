@@ -1,68 +1,72 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { usersAPI } from "../../services/api";
+import { useAuth } from "../../context/AuthContext";
 import "./SuggestedUsers.css";
 
 const SuggestedUsers = () => {
-  const [followedUsers, setFollowedUsers] = useState(new Set());
+  const { user: me } = useAuth();
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [following, setFollowing] = useState(() => new Set());
 
-  const suggestedUsers = [
-    {
-      id: 1,
-      name: "John Doe",
-      username: "@johndoe",
-      bio: "Frontend Developer | React Enthusiast",
-      followers: 1250,
-      verified: false,
-      avatar: "JD",
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      username: "@janesmith",
-      bio: "UX Designer & Tech Writer",
-      followers: 3400,
-      verified: true,
-      avatar: "JS",
-    },
-    {
-      id: 3,
-      name: "Tech News",
-      username: "@technews",
-      bio: "Latest updates in technology",
-      followers: 15600,
-      verified: true,
-      avatar: "TN",
-    },
-    {
-      id: 4,
-      name: "Sarah Wilson",
-      username: "@sarahw",
-      bio: "Product Manager | Startup Life",
-      followers: 890,
-      verified: false,
-      avatar: "SW",
-    },
-  ];
+  const myId = me?.id;
 
-  const formatFollowerCount = (count) => {
-    if (count >= 1000000) {
-      return (count / 1000000).toFixed(1) + "M";
-    } else if (count >= 1000) {
-      return (count / 1000).toFixed(1) + "K";
-    }
-    return count.toString();
-  };
-
-  const handleFollow = (userId) => {
-    setFollowedUsers((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(userId)) {
-        newSet.delete(userId);
-      } else {
-        newSet.add(userId);
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const [usersRes, followingRes] = await Promise.all([
+          usersAPI.listUsers(1, 10),
+          myId ? usersAPI.getFollowing(myId, 1, 100) : Promise.resolve({ following: [] }),
+        ]);
+        if (!active) return;
+        // Exclude self from suggestions
+        const filtered = (usersRes.users || []).filter(u => u.id !== myId);
+        setUsers(filtered);
+        // Seed following set
+        const seed = new Set((followingRes.following || []).map(u => u.id));
+        setFollowing(seed);
+      } catch (e) {
+        if (!active) return;
+        setError(e?.message || "Failed to load users");
+      } finally {
+        if (active) setLoading(false);
       }
-      return newSet;
+    };
+    load();
+    return () => { active = false; };
+  }, [myId]);
+
+  const handleToggle = async (targetId) => {
+    // Optimistic UI toggle
+    setFollowing(prev => {
+      const next = new Set(prev);
+      if (next.has(targetId)) next.delete(targetId); else next.add(targetId);
+      return next;
     });
+    try {
+      const isFollowing = following.has(targetId);
+      await usersAPI.toggleFollow(targetId, isFollowing);
+    } catch (e) {
+      // Revert on error
+      setFollowing(prev => {
+        const next = new Set(prev);
+        if (next.has(targetId)) next.delete(targetId); else next.add(targetId);
+        return next;
+      });
+      console.error("Follow toggle failed:", e);
+    }
   };
+
+  const formatFollowerCount = useMemo(() => (count) => {
+    if (typeof count !== 'number') return "0";
+    if (count >= 1_000_000) return (count / 1_000_000).toFixed(1) + "M";
+    if (count >= 1_000) return (count / 1_000).toFixed(1) + "K";
+    return String(count);
+  }, []);
 
   return (
     <div className="suggested-users">
@@ -70,47 +74,42 @@ const SuggestedUsers = () => {
         <h2>Who to follow</h2>
       </div>
 
+      {loading && <div className="loading">Loading…</div>}
+      {error && <div className="error" role="alert">{error}</div>}
+
       <div className="users-list">
-        {suggestedUsers.map((user) => (
-          <div key={user.id} className="user-item">
+        {users.map((u) => (
+          <div key={u.id} className="user-item">
             <div className="user-info">
               <div className="user-avatar">
-                <div className="avatar-placeholder">{user.avatar}</div>
+                <div className="avatar-placeholder">{(u.username || u.displayName || "?").charAt(0).toUpperCase()}</div>
               </div>
 
               <div className="user-details">
                 <div className="user-name">
-                  <span className="display-name">{user.name}</span>
-                  {user.verified && (
-                    <span className="verified" title="Verified">
-                      <svg
-                        viewBox="0 0 24 24"
-                        width="16"
-                        height="16"
-                        fill="currentColor"
-                      >
-                        <path d="M22.25 12c0-1.43-.88-2.67-2.19-3.34.46-1.39.2-2.9-.81-3.91s-2.52-1.27-3.91-.81c-.66-1.31-1.91-2.19-3.34-2.19s-2.67.88-3.33 2.19c-1.4-.46-2.91-.2-3.92.81s-1.26 2.52-.8 3.91c-1.31.67-2.2 1.91-2.2 3.34s.89 2.67 2.2 3.34c-.46 1.39-.21 2.9.8 3.91s2.52 1.26 3.91.81c.67 1.31 1.91 2.19 3.34 2.19s2.68-.88 3.34-2.19c1.39.45 2.9.2 3.91-.81s1.27-2.52.81-3.91c1.31-.67 2.19-1.91 2.19-3.34zm-11.71 4.2L6.8 12.46l1.41-1.42 2.26 2.26 4.8-5.23 1.47 1.36-6.2 6.77z" />
-                      </svg>
-                    </span>
-                  )}
+                  <span className="display-name">{u.displayName || u.username}</span>
                 </div>
 
-                <div className="username">{user.username}</div>
+                <div className="username">@{u.username || u.displayName}</div>
 
-                <div className="user-bio">{user.bio}</div>
+                {u.bio && <div className="user-bio">{u.bio}</div>}
 
-                <div className="follower-count">
-                  {formatFollowerCount(user.followers)} followers
-                </div>
+                {typeof u._count?.followers === 'number' && (
+                  <div className="follower-count">
+                    {formatFollowerCount(u._count.followers)} followers
+                  </div>
+                )}
               </div>
             </div>
 
             <button
-              className={`follow-btn ${followedUsers.has(user.id) ? "following" : ""}`}
-              onClick={() => handleFollow(user.id)}
+              className={`follow-btn ${following.has(u.id) ? "following" : ""}`}
+              onClick={() => handleToggle(u.id)}
+              disabled={!myId}
+              title={!myId ? "Login to follow" : undefined}
             >
               <span className="follow-text">
-                {followedUsers.has(user.id) ? "Following" : "Follow"}
+                {following.has(u.id) ? "Following" : "Follow"}
               </span>
             </button>
 

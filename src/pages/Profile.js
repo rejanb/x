@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { usersAPI } from "../services/api";
+import { usersAPI, postsAPI } from "../services/api";
+import TweetCard from "../components/tweet/TweetCard";
 import "./Profile.css";
 import { useNavigate } from "react-router-dom";
 
@@ -8,20 +9,26 @@ const Profile = () => {
   const { user } = useAuth();
   const [stats, setStats] = useState({ followers: 0, following: 0 });
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("tweets"); // tweets | media | likes
+  const [tweets, setTweets] = useState([]);
+  const [mediaTweets, setMediaTweets] = useState([]);
+  const [likedTweets, setLikedTweets] = useState([]);
+  const [tabLoading, setTabLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !user.id) return;
 
     const fetchFollowCounts = async () => {
       try {
         setLoading(true);
-        console.log("user id:", user.id);
-        const data = await usersAPI.getFollowCounts(user.id);
+  const uid = user.id;
+  console.log("user id:", uid);
+  const data = await usersAPI.getFollowCounts(uid);
         console.log("Follow counts:", data);
         setStats(data);
       } catch (error) {
-        console.error("Failed to fetch follow counts:", error);
+  console.error("Failed to fetch follow counts:", error);
       } finally {
         setLoading(false);
       }
@@ -29,6 +36,32 @@ const Profile = () => {
 
     fetchFollowCounts();
   }, [user]);
+
+  useEffect(() => {
+    if (!user || !user.id) return;
+    const load = async () => {
+      setTabLoading(true);
+      try {
+        const uid = user.id;
+        if (activeTab === "tweets") {
+          const res = await postsAPI.getPostsByAuthor(uid, 1, 20);
+          setTweets(res.posts || res || []);
+        } else if (activeTab === "media") {
+          const res = await postsAPI.getPostsByAuthor(uid, 1, 50);
+          const all = res.posts || res || [];
+          setMediaTweets(all.filter(p => Array.isArray(p.media) && p.media.length > 0));
+        } else if (activeTab === "likes") {
+          const res = await postsAPI.getLikedPosts(uid, 1, 20);
+          setLikedTweets(res.posts || res || []);
+        }
+      } catch (e) {
+        console.error("Failed to load profile tab posts:", e);
+      } finally {
+        setTabLoading(false);
+      }
+    };
+    load();
+  }, [user, activeTab]);
 
   if (!user) {
     return <div>Loading...</div>;
@@ -83,14 +116,47 @@ const Profile = () => {
       </div>
 
       <div className="profile-tabs">
-        <div className="tab active">Tweets</div>
-        <div className="tab">Tweets & replies</div>
-        <div className="tab">Media</div>
-        <div className="tab">Likes</div>
+        <div
+          className={`tab ${activeTab === "tweets" ? "active" : ""}`}
+          onClick={() => setActiveTab("tweets")}
+          role="button"
+        >
+          Tweets
+        </div>
+        <div className="tab disabled" title="Coming soon">Tweets & replies</div>
+        <div
+          className={`tab ${activeTab === "media" ? "active" : ""}`}
+          onClick={() => setActiveTab("media")}
+          role="button"
+        >
+          Media
+        </div>
+        <div
+          className={`tab ${activeTab === "likes" ? "active" : ""}`}
+          onClick={() => setActiveTab("likes")}
+          role="button"
+        >
+          Likes
+        </div>
       </div>
 
       <div className="profile-content">
-        <p>Your tweets will appear here...</p>
+        {tabLoading && <div>Loading…</div>}
+        {!tabLoading && activeTab === "tweets" && (
+          tweets.length ? tweets.map((p, i) => (
+            <TweetCard key={p._id || p.id || i} tweet={p} />
+          )) : <p>No tweets yet.</p>
+        )}
+        {!tabLoading && activeTab === "media" && (
+          mediaTweets.length ? mediaTweets.map((p, i) => (
+            <TweetCard key={p._id || p.id || i} tweet={p} />
+          )) : <p>No media tweets yet.</p>
+        )}
+        {!tabLoading && activeTab === "likes" && (
+          likedTweets.length ? likedTweets.map((p, i) => (
+            <TweetCard key={p._id || p.id || i} tweet={p} />
+          )) : <p>No liked tweets yet.</p>
+        )}
       </div>
     </div>
   );
