@@ -278,6 +278,44 @@ export const postsAPI = {
     },
 };
 
+// Comments API functions
+export const commentsAPI = {
+    // Get comments for a post
+    getPostComments: async (postId, page = 1, limit = 10) => {
+        try {
+            const response = await apiClient.get(
+                `/posts/${postId}/comments?page=${page}&limit=${limit}`
+            );
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    // Add comment to post
+    addComment: async (postId, commentData) => {
+        try {
+            const response = await apiClient.post(
+                `/posts/${postId}/comments`,
+                commentData
+            );
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    // Delete comment
+    deleteComment: async (commentId) => {
+        try {
+            const response = await apiClient.delete(`/comments/${commentId}`);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+};
+
 // Polls API functions
 export const pollsAPI = {
     // Create a new poll
@@ -317,44 +355,6 @@ export const pollsAPI = {
     getPollResults: async (pollId) => {
         try {
             const response = await apiClient.get(`/polls/${pollId}/results`);
-            return response.data;
-        } catch (error) {
-            throw error.response?.data || error.message;
-        }
-    },
-};
-
-// Comments API functions
-export const commentsAPI = {
-    // Get comments for a post
-    getPostComments: async (postId, page = 1, limit = 10) => {
-        try {
-            const response = await apiClient.get(
-                `/posts/${postId}/comments?page=${page}&limit=${limit}`
-            );
-            return response.data;
-        } catch (error) {
-            throw error.response?.data || error.message;
-        }
-    },
-
-    // Add comment to post
-    addComment: async (postId, commentData) => {
-        try {
-            const response = await apiClient.post(
-                `/posts/${postId}/comments`,
-                commentData
-            );
-            return response.data;
-        } catch (error) {
-            throw error.response?.data || error.message;
-        }
-    },
-
-    // Delete comment
-    deleteComment: async (commentId) => {
-        try {
-            const response = await apiClient.delete(`/comments/${commentId}`);
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
