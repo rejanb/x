@@ -1,0 +1,80 @@
+.notification-toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #1da1f2;
+  color: white;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  min-width: 300px;
+  max-width: 400px;
+  transition: all 0.3s ease;
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.notification-toast.hidden {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+.notification-content {
+  /* display: flex; */
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.notification-message {
+  flex: 1;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.notification-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.notification-close:hover {
+  opacity: 1;
+}
+
+/* Stack multiple notifications */
+.notification-toast:nth-child(2) {
+  top: 90px;
+}
+
+.notification-toast:nth-child(3) {
+  top: 160px;
+}
+
+.notification-toast:nth-child(4) {
+  top: 230px;
+}
+
+/* Comment-specific styling */
+.notification-toast.comment {
+  background: #1da1f2;
+}
+
+.notification-toast.reply {
+  background: #17bf63;
+}
+
+.notification-toast.like {
+  background: #e0245e;
+}
+
+.notification-toast.follow {
+  background: #794bc4;
+}

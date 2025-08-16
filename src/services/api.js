@@ -584,11 +584,15 @@ export const notificationsAPI = {
         }
     },
 
+    // Removed getByActor API
+
     // Mark notification as read
     markAsRead: async (notificationId) => {
         try {
-            const response = await apiClient.put(
-                `/notifications/${notificationId}/read`
+            // Send an explicit empty JSON body to avoid sending literal `null`
+            const response = await apiClient.patch(
+                `/notifications/${notificationId}/read`,
+                {}
             );
             return response.data;
         } catch (error) {
@@ -599,7 +603,7 @@ export const notificationsAPI = {
     // Mark all notifications as read
     markAllAsRead: async () => {
         try {
-            const response = await apiClient.put("/notifications/read-all");
+            const response = await apiClient.patch("/notifications/read-all", {});
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -678,7 +682,7 @@ export const apiHelpers = {
 export { apiClient };
 
 // Default export with all APIs
-export default {
+const Api = {
     auth: authAPI,
     posts: postsAPI,
     comments: commentsAPI,
@@ -689,3 +693,5 @@ export default {
     custom: customAPI,
     helpers: apiHelpers,
 };
+
+export default Api;

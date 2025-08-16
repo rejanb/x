@@ -1,12 +1,13 @@
 import React from "react";
 import {
-    Navigate,
-    Route,
-    BrowserRouter as Router,
-    Routes,
+  Navigate,
+  Route,
+  BrowserRouter as Router,
+  Routes,
 } from "react-router-dom";
 import "./App.css";
 import Layout from "./components/common/Layout";
+import NotificationManager from "./components/common/NotificationManager";
 import PrivateRoute from "./components/common/PrivateRoute";
 import PublicRoute from "./components/common/PublicRoute";
 import { AuthProvider } from "./context/AuthContext";
@@ -32,6 +33,7 @@ function App() {
         <TweetProvider>
           <Router>
             <div className="App">
+              <NotificationManager />
               <Routes>
                 {/* Public Routes */}
                 <Route element={<PublicRoute />}>
