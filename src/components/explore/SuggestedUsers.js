@@ -3,7 +3,7 @@ import { usersAPI } from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
 import "./SuggestedUsers.css";
 
-const SuggestedUsers = () => {
+const SuggestedUsers = ({ filter = "" }) => {
   const { user: me } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -68,6 +68,21 @@ const SuggestedUsers = () => {
     return String(count);
   }, []);
 
+  const normalizedFilter = filter.trim().toLowerCase();
+  const visibleUsers = useMemo(() => {
+    if (!normalizedFilter) return users;
+    return users.filter((u) => {
+      const username = (u.username || "").toLowerCase();
+      const display = (u.displayName || "").toLowerCase();
+      const bio = (u.bio || "").toLowerCase();
+      return (
+        username.includes(normalizedFilter) ||
+        display.includes(normalizedFilter) ||
+        bio.includes(normalizedFilter)
+      );
+    });
+  }, [users, normalizedFilter]);
+
   return (
     <div className="suggested-users">
       <div className="suggested-header">
@@ -78,7 +93,7 @@ const SuggestedUsers = () => {
       {error && <div className="error" role="alert">{error}</div>}
 
       <div className="users-list">
-        {users.map((u) => (
+        {visibleUsers.map((u) => (
           <div key={u.id} className="user-item">
             <div className="user-info">
               <div className="user-avatar">

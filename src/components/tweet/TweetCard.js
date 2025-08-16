@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useTweets } from "../../context/TweetContext";
 import { useConfirmationDialog } from "../../hooks/useConfirmationDialog";
-import { userAPI } from "../../services/apiService";
+import { userAPI, postAPI, pollAPI } from "../../services/apiService";
 import ConfirmationDialog from "../common/ConfirmationDialog";
 import HashtagText from "../common/HashtagText";
 import Poll from "./Poll";
@@ -26,7 +26,7 @@ const TweetCard = ({ tweet }) => {
   const content = tweet?.content || '';
   const createdAt = tweet?.createdAt || new Date();
   const media = tweet?.media || [];
-  const poll = tweet?.poll || null;
+  const poll = tweet?.poll || (tweet?.poll_id ? { poll_id: tweet.poll_id } : null);
 
   // Fetch author information - this hook must come before any early returns
   useEffect(() => {
@@ -106,7 +106,9 @@ const TweetCard = ({ tweet }) => {
     if (e.target.closest(".tweet-actions") || e.target.closest(".delete-btn")) {
       return;
     }
-    if (tweetId) {
+    // Prevent navigation for poll-only items that don't have a real postId
+    const canNavigate = Boolean(tweetId) && !String(tweetId).startsWith('poll-');
+    if (canNavigate) {
       navigate(`/tweet/${tweetId}`);
     }
   };
@@ -177,21 +179,7 @@ const TweetCard = ({ tweet }) => {
     setRtMenuOpen(false);
   };
 
-  const handleDelete = async () => {
-    const confirmed = await showConfirmation({
-      title: "Delete Tweet?",
-      message:
-        "This can't be undone and it will be removed from your profile, the timeline of any accounts that follow you, and from search results.",
-      confirmText: "Delete",
-      cancelText: "Cancel",
-      type: "danger",
-    });
-
-    if (confirmed && tweetId) {
-      deleteTweet(tweetId);
-    }
-  };
-
+  // Show human-friendly timestamp
   const formatTime = (timestamp) => {
     const date = new Date(timestamp);
     const now = new Date();
@@ -204,7 +192,37 @@ const TweetCard = ({ tweet }) => {
     return date.toLocaleDateString();
   };
 
+  // Delete post (and linked poll if any) - only available on Profile page
+  const handleDelete = async () => {
+    const confirmed = await showConfirmation({
+      title: "Delete Tweet?",
+      message:
+        "This can't be undone and it will be removed from your profile, the timeline of any accounts that follow you, and from search results.",
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      type: "danger",
+    });
+
+    if (!confirmed || !tweetId) return;
+
+    try {
+      // Ignore synthetic poll-only ids
+      if (String(tweetId).startsWith('poll-')) return;
+      await postAPI.deletePost(tweetId);
+      const linkedPollId = poll?.id || poll?.poll_id || poll?.pollId;
+      if (linkedPollId) {
+        try { await pollAPI.deletePoll(linkedPollId); } catch (_) { /* ignore */ }
+      }
+      deleteTweet(tweetId);
+      try { window.dispatchEvent(new CustomEvent('post:deleted', { detail: { postId: tweetId } })); } catch (_) { /* noop */ }
+    } catch (err) {
+      const msg = (err && (err.message || err)) || 'Failed to delete post';
+      toast.error(typeof msg === 'string' ? msg : 'Failed to delete post');
+    }
+  };
+
   const isOwner = user && user.id === authorId;
+  const onProfilePage = typeof window !== 'undefined' && window.location.pathname.startsWith('/profile');
 
   // Show loading state while fetching author
   if (authorLoading) {
@@ -230,7 +248,7 @@ const TweetCard = ({ tweet }) => {
 
   return (
     <>
-    <div className="tweet-card" style={{ cursor: "pointer" }}>
+  <div className="tweet-card" style={{ cursor: "pointer" }} onClick={handleTweetClick}>
       <div className="tweet-header">
         <div className="tweet-avatar">
           <div className="avatar-placeholder">
@@ -247,7 +265,7 @@ const TweetCard = ({ tweet }) => {
             </span>
           </div>
 
-          {isOwner && (
+          {isOwner && onProfilePage && (
             <button
               onClick={handleDelete}
               className="delete-button delete-btn"

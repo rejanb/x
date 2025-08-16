@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { postAPI } from '../services/apiService';
+import React, { useEffect, useRef, useState } from 'react';
+import { postAPI, pollAPI } from '../services/apiService';
 import { useAuth } from '../context/AuthContext';
 import { useRealTime } from '../context/RealTimeContext';
 import CreatePost from './CreatePost';
@@ -13,9 +13,16 @@ const Feed = () => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [backendStatus, setBackendStatus] = useState('checking');
+  const [view, setView] = useState('posts'); // 'posts' | 'polls'
   const [lastApiResponse, setLastApiResponse] = useState(null);
   const { user } = useAuth(); // Get current user
-  const { isConnected, newPostsCount, clearNewPostsCount, authError, clearAuthError } = useRealTime();
+  const { newPostsCount, clearNewPostsCount } = useRealTime();
+  const viewRef = useRef(view);
+
+  // Keep a ref of current view to avoid mixing posts into polls list via realtime events
+  useEffect(() => {
+    viewRef.current = view;
+  }, [view]);
 
   const fetchPosts = async (pageNum = 1, append = false) => {
     try {
@@ -34,13 +41,14 @@ const Feed = () => {
       if (append) {
         setPosts(prev => {
           // Filter out duplicates when appending
-          const existingIds = new Set(prev.map(post => post._id || post.id));
-          const newPosts = postsArray.filter(post => !existingIds.has(post._id || post.id));
+          const existingIds = new Set(prev.map(getStableKey));
+          const newPosts = postsArray.filter(post => !existingIds.has(getStableKey(post)));
           console.log(`🔄 Appending ${newPosts.length} new posts (filtered ${postsArray.length - newPosts.length} duplicates)`);
-          return [...prev, ...newPosts];
+          return deduplicatePosts([...prev, ...newPosts]);
         });
       } else {
-        setPosts(postsArray);
+        // Always dedupe on replace as well
+        setPosts(deduplicatePosts(postsArray));
       }
       
       setHasMore(postsArray.length === 10);
@@ -60,7 +68,7 @@ const Feed = () => {
         const response = await fetch('http://localhost:3001/api/posts?page=1&limit=1');
         if (response.ok) {
           setBackendStatus('connected');
-          fetchPosts(1, false);
+          // Do not fetch here to avoid double-fetch; view effect will fetch
         } else {
           setBackendStatus('error');
           setError('Backend responded with error: ' + response.status);
@@ -74,23 +82,72 @@ const Feed = () => {
     checkBackendStatus();
   }, []);
 
+  // Fetch polls when switching view
+  useEffect(() => {
+    const fetchPolls = async () => {
+      try {
+        if (view !== 'polls') return;
+        setLoading(true);
+        setPosts([]); // reset list when switching view
+        setPage(1);
+        const res = await pollAPI.getActivePolls(page, 10);
+        // Normalize to a list of objects compatible with TweetCard + Poll component
+        const pollsArray = res?.polls || [];
+  const mapped = pollsArray.map(p => {
+          const base = {
+            _id: p.postId || `poll-${p.id}`,
+            id: p.postId || `poll-${p.id}`,
+            content: p.question,
+            authorId: p.userId,
+            createdAt: p.createdAt || new Date().toISOString(),
+            media: [],
+            likes: [], retweets: [], replies: []
+          };
+          // Provide both poll_id and a minimal poll object so Poll can fetch details/results
+          return {
+            ...base,
+            poll_id: p.id,
+            poll: { id: p.id, poll_id: p.id }
+          };
+        });
+  // Dedupe by stable key to avoid duplicate polls
+  setPosts(deduplicatePosts(mapped));
+        setHasMore(res?.polls?.length === 10);
+      } catch (err) {
+        console.error('❌ Error fetching polls:', err);
+        setError(err.message || 'Failed to load polls');
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (view === 'polls') fetchPolls();
+    if (view === 'posts') {
+      setPosts([]); // reset list when switching view
+      fetchPosts(1, false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view]);
+
   // Real-time event listeners
   useEffect(() => {
     const handleNewPost = (event) => {
+      // Ignore real-time new posts when viewing Polls to avoid mixing content types
+      if (viewRef.current !== 'posts') return;
       const newPost = event.detail;
       setPosts(prev => {
         // Check if post already exists to avoid duplicates
-        if (prev.some(post => (post._id || post.id) === (newPost._id || newPost.id))) {
+        if (prev.some(post => getStableKey(post) === getStableKey(newPost))) {
           return prev;
         }
-        return [newPost, ...prev];
+        return deduplicatePosts([newPost, ...prev]);
       });
     };
 
     const handlePostUpdate = (event) => {
+      if (viewRef.current !== 'posts') return; // Only update posts list in posts view
       const { postId, updateType, data } = event.detail;
       setPosts(prev => prev.map(post => {
-        if ((post._id || post.id) === postId) {
+        if (getStableKey(post) === postId || (post._id || post.id) === postId) {
           switch (updateType) {
             case 'like':
               return { ...post, likes: [...(post.likes || []), data.userId] };
@@ -120,13 +177,13 @@ const Feed = () => {
   const handlePostCreated = (newPost) => {
     setPosts(prev => {
       // Check if post already exists to avoid duplicates
-      const postId = newPost._id || newPost.id;
-      if (prev.some(post => (post._id || post.id) === postId)) {
-        console.log('🔄 Post already exists, skipping duplicate:', postId);
+      const postKey = getStableKey(newPost);
+      if (prev.some(post => getStableKey(post) === postKey)) {
+        console.log('🔄 Post already exists, skipping duplicate:', postKey);
         return prev;
       }
-      console.log('✅ Adding new post to feed:', postId);
-      return [newPost, ...prev];
+  console.log('✅ Adding new post to feed:', postKey);
+  return deduplicatePosts([newPost, ...prev]);
     });
   };
 
@@ -142,20 +199,27 @@ const Feed = () => {
     clearNewPostsCount();
   };
 
-  const handleRefreshFeed = () => {
-    refreshPosts();
-  };
+  // removed test/debug header actions
 
   // Helper function to deduplicate posts
+  const getStableKey = (post) => {
+    // Prefer Mongo _id or id; fallback to poll id if present
+    const directId = post?._id || post?.id;
+    if (directId) return String(directId);
+    if (post?.poll_id) return `poll-${post.poll_id}`;
+    return undefined;
+  };
+
   const deduplicatePosts = (postsArray) => {
     const seen = new Set();
     return postsArray.filter(post => {
-      const id = post._id || post.id;
-      if (seen.has(id)) {
-        console.log('🔄 Removing duplicate post:', id);
+      const key = getStableKey(post);
+      if (!key) return true;
+      if (seen.has(key)) {
+        console.log('🔄 Removing duplicate post:', key);
         return false;
       }
-      seen.add(id);
+      seen.add(key);
       return true;
     });
   };
@@ -186,110 +250,37 @@ const Feed = () => {
       <div className="feed-header">
         <div className="header-left">
           <h2>Feed</h2>
-          <div className={`backend-status ${backendStatus}`}>
-            {backendStatus === 'connected' && '🟢 Backend Connected'}
-            {backendStatus === 'disconnected' && '🔴 Backend Disconnected'}
-            {backendStatus === 'error' && '🟡 Backend Error'}
-            {backendStatus === 'checking' && '🟡 Checking...'}
+          <div style={{ display: 'flex', gap: 8, marginLeft: 12 }}>
+            <button
+              className={view === 'posts' ? 'tab-active' : 'tab'}
+              onClick={() => setView('posts')}
+            >
+              Posts
+            </button>
+            <button
+              className={view === 'polls' ? 'tab-active' : 'tab'}
+              onClick={() => setView('polls')}
+            >
+              Polls
+            </button>
           </div>
-          <div className={`websocket-status ${isConnected ? 'connected' : 'disconnected'}`}>
-            {isConnected ? '🔗 Real-time Connected' : '❌ Real-time Disconnected'}
-          </div>
-          {authError && (
-            <div className="auth-error-alert" style={{
-              background: '#ffebee',
-              border: '1px solid #f44336',
-              borderRadius: '4px',
-              padding: '8px',
-              margin: '5px 0',
-              fontSize: '14px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between'
-            }}>
-              <span>🔑 Session expired - Please log in again for real-time updates</span>
-              <button 
-                onClick={clearAuthError}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '16px',
-                  cursor: 'pointer',
-                  padding: '2px 4px'
-                }}
-              >
-                ✕
-              </button>
-            </div>
-          )}
+          {/* status indicators removed */}
           {newPostsCount > 0 && (
             <div className="new-posts-indicator" onClick={refreshPosts}>
               {newPostsCount} new post{newPostsCount !== 1 ? 's' : ''} available - Click to refresh
             </div>
           )}
         </div>
-        <div className="header-buttons">
-          <button 
-            className="test-api-btn"
-            onClick={() => fetchPosts(1, false)}
-          >
-            🔄 Refresh Posts
-          </button>
-          
-          <button 
-            className="test-post-btn"
-            onClick={async () => {
-              try {
-                // Use current user's ID, or skip test if no user
-                if (!user?.id) {
-                  console.log('⚠️ No user logged in, skipping test post');
-                  return;
-                }
-                
-                const testPost = await postAPI.createPost({
-                  content: 'This is a test post from the refresh button! #test #api #working',
-                  authorId: user.id
-                });
-                console.log('✅ Test post created:', testPost);
-                
-                // Create a properly structured post object
-                const structuredPost = {
-                  _id: testPost._id || testPost.id || `test-${Date.now()}`,
-                  content: testPost.content || 'Test post content',
-                  authorId: testPost.authorId || user.id,
-                  createdAt: testPost.createdAt || new Date().toISOString(),
-                  media: testPost.media || [],
-                  poll: testPost.poll || null,
-                  likes: testPost.likes || [],
-                  retweets: testPost.retweets || [],
-                  replies: testPost.replies || []
-                };
-                
-                console.log('🔍 Structured post:', structuredPost);
-                
-                if (handlePostCreated) {
-                  handlePostCreated(structuredPost);
-                }
-                // Refresh posts to show the new one
-                fetchPosts(1, false);
-              } catch (error) {
-                console.error('❌ Test post failed:', error);
-                alert('Test post failed: ' + error.message);
-              }
-            }}
-          >
-            🧪 Test Post
-          </button>
-        </div>
+        {/* header action buttons removed */}
       </div>
       
-      <CreatePost onPostCreated={handlePostCreated} />
+  {view === 'posts' && <CreatePost onPostCreated={handlePostCreated} />}
       
       <div className="posts-container">
-        {posts.map((post, index) => {
+    {posts.map((post, index) => {
           console.log(`🔍 Rendering post ${index}:`, post);
           return (
-            <TweetCard key={post._id || post.id || index} tweet={post} />
+      <TweetCard key={getStableKey(post) || index} tweet={post} />
           );
         })}
         
@@ -300,7 +291,7 @@ const Feed = () => {
           </div>
         )}
         
-        {!loading && hasMore && (
+  {!loading && hasMore && view === 'posts' && (
           <button 
             className="load-more-btn"
             onClick={loadMore}

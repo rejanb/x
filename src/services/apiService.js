@@ -340,6 +340,15 @@ export const pollAPI = {
     
     getPollResults: async (pollId) => {
         return makeRequest('GET', `/api/polls/${pollId}/results`);
+    },
+
+    getActivePolls: async (page = 1, limit = 10) => {
+        const url = buildPaginatedUrl('/api/polls/active', page, limit);
+        return makeRequest('GET', url);
+    },
+
+    deletePoll: async (pollId) => {
+        return makeRequest('DELETE', `/api/polls/${pollId}`);
     }
 };
 

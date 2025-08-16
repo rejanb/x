@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { postsAPI } from '../services/api';
+import ApiService, { pollAPI } from '../services/apiService';
 import { useRealTime } from '../context/RealTimeContext';
 import { useAuth } from '../context/AuthContext';
 import './CreatePost.css';
@@ -12,6 +13,7 @@ const CreatePost = ({ onPostCreated }) => {
   const [isPoll, setIsPoll] = useState(false);
   const [pollQuestion, setPollQuestion] = useState('');
   const [pollOptions, setPollOptions] = useState(['', '']);
+  const [postPollToFeed, setPostPollToFeed] = useState(false); // optional: also create a Post for the poll
   const [isLoading, setIsLoading] = useState(false);
   const [showPollForm, setShowPollForm] = useState(false);
   
@@ -21,7 +23,9 @@ const CreatePost = ({ onPostCreated }) => {
   const MAX_CHARACTERS = 280;
   const remainingChars = MAX_CHARACTERS - content.length;
   const isOverLimit = remainingChars < 0;
-  const canPost = content.trim().length > 0 && !isOverLimit && !isLoading;
+  // Allow posting when there's either text, at least one image/video, or a poll
+  const hasPollReady = isPoll && showPollForm && pollOptions.filter(o => o.trim() !== '').length >= 2 && (pollQuestion.trim().length > 0 || content.trim().length > 0);
+  const canPost = ((content.trim().length > 0) || files.length > 0 || hasPollReady) && !isOverLimit && !isLoading;
 
   // Extract hashtags and mentions from content
   const extractHashtags = (text) => {
@@ -113,31 +117,40 @@ const CreatePost = ({ onPostCreated }) => {
         .replace(/@[\w\u0590-\u05ff]+/g, '')
         .trim();
 
-      if (isPoll && showPollForm) {
-        // Create poll post
-        const pollData = {
+  if (isPoll && showPollForm) {
+        // Create poll via Polls API first
+        const pollPayload = {
           question: pollQuestion,
           options: pollOptions.filter(opt => opt.trim() !== ''),
-          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-          userId: user?.id // Use actual user ID
+          // expiresAt can be added later via UI; skip to let it be active
+          userId: user?.id
         };
 
-        console.log('🔍 Creating poll post:', { content: cleanContent, pollData });
-        
-        // For now, create post with poll data embedded
-        const postData = {
-          content: cleanContent || pollQuestion,
-          authorId: user?.id, // Use actual user ID
-          hashtags: hashtags.map(tag => tag.slice(1)), // Remove # symbol
-          mentions: mentions.map(mention => mention.slice(1)), // Remove @ symbol
-          poll: pollData
-        };
+        console.log('🔍 Creating poll via Polls API:', pollPayload);
+        const createdPoll = await ApiService.poll.createPoll(pollPayload);
+        const pollId = createdPoll?.id;
+        if (!pollId) throw new Error('Poll creation failed: missing id');
 
-        result = await postsAPI.createPost(postData);
-        console.log('✅ Poll post created:', result);
+        if (postPollToFeed) {
+          // Optionally create a post that links to this poll by id
+          const postData = {
+            content: cleanContent || pollQuestion,
+            authorId: user?.id,
+            hashtags: hashtags.map(tag => tag.slice(1)),
+            mentions: mentions.map(mention => mention.slice(1)),
+            poll: { id: pollId } // Link existing poll
+          };
+
+          result = await postsAPI.createPost(postData);
+          console.log('✅ Post linked to poll created:', result);
+        } else {
+          // No post created; inform user to view in Polls tab
+          result = null;
+          console.log('✅ Poll created without posting to feed. Poll ID:', pollId);
+        }
       } else {
         // Create normal post or post with media
-        if (files.length > 0) {
+  if (files.length > 0) {
           // Post with media
           const postData = {
             content: cleanContent,
@@ -149,10 +162,10 @@ const CreatePost = ({ onPostCreated }) => {
           console.log('🔍 Creating post with media:', postData, 'Files:', files);
           result = await postsAPI.createPostWithMedia(postData, files);
           console.log('✅ Post with media created:', result);
-        } else {
+    } else {
           // Text-only post
           const postData = {
-            content: cleanContent,
+      content: cleanContent, // allow empty string when media exists (backend accepts string)
             authorId: user?.id, // Use actual user ID
             hashtags: hashtags.map(tag => tag.slice(1)),
             mentions: mentions.map(mention => mention.slice(1))
@@ -172,15 +185,19 @@ const CreatePost = ({ onPostCreated }) => {
       setPollQuestion('');
       setPollOptions(['', '']);
 
-      // Notify parent component
+      // Notify parent component only if a Post was created (not for poll-only)
       if (onPostCreated && result) {
         onPostCreated(result);
       }
 
-      // Show notification for successful post creation
-      if (showTestNotification && result) {
-        const postContent = result.content || content;
-        showTestNotification('post', `You posted: "${postContent.substring(0, 50)}${postContent.length > 50 ? '...' : ''}"`);
+      // Show notification for successful creation
+      if (showTestNotification) {
+        if (result) {
+          const postContent = result.content || content || pollQuestion;
+          showTestNotification('post', `You posted: "${postContent.substring(0, 50)}${postContent.length > 50 ? '...' : ''}"`);
+        } else if (isPoll) {
+          showTestNotification('post', 'Poll created! Check the Polls tab.');
+        }
       }
 
       // Show success message
@@ -281,6 +298,16 @@ const CreatePost = ({ onPostCreated }) => {
                   </button>
                 )}
               </div>
+
+              {/* Option to also create a Post for the poll */}
+              <label className="poll-post-toggle" style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
+                <input
+                  type="checkbox"
+                  checked={postPollToFeed}
+                  onChange={(e) => setPostPollToFeed(e.target.checked)}
+                />
+                <span>Also post this poll to the feed</span>
+              </label>
             </div>
           )}
         </div>
@@ -331,6 +358,7 @@ const CreatePost = ({ onPostCreated }) => {
         ref={fileInputRef}
         type="file"
         multiple
+        // Prefer images; videos still allowed for flexibility
         accept="image/*,video/*"
         onChange={handleFileSelect}
         style={{ display: 'none' }}

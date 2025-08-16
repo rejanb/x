@@ -131,9 +131,9 @@ const TweetDetailCard = ({ tweet, onLike, onRetweet, onReply }) => {
           <HashtagText text={tweet.content} />
         </p>
 
-        {tweet.images && tweet.images.length > 0 && (
+    {(tweet.media?.length || tweet.images?.length) > 0 && (
           <div className="tweet-images">
-            {tweet.images.map((image, index) => (
+      {(tweet.media || tweet.images || []).map((image, index) => (
               <img
                 key={index}
                 src={image}
@@ -144,7 +144,9 @@ const TweetDetailCard = ({ tweet, onLike, onRetweet, onReply }) => {
           </div>
         )}
 
-        {tweet.poll && <Poll poll={tweet.poll} tweetId={tweet.id} />}
+        {(tweet.poll || tweet.poll_id) && (
+          <Poll poll={tweet.poll || { poll_id: tweet.poll_id }} tweetId={tweet.id || tweet._id} />
+        )}
       </div>
 
       <div className="tweet-timestamp">{formatFullDate(tweet.createdAt)}</div>

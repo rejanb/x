@@ -71,6 +71,19 @@ const Profile = () => {
     load();
   }, [user, activeTab]);
 
+  // Remove deleted posts from lists immediately
+  useEffect(() => {
+    const onDeleted = (e) => {
+      const id = e.detail?.postId;
+      if (!id) return;
+      setTweets(prev => prev.filter(p => (p._id || p.id) !== id));
+      setMediaTweets(prev => prev.filter(p => (p._id || p.id) !== id));
+      setLikedTweets(prev => prev.filter(p => (p._id || p.id) !== id));
+    };
+    window.addEventListener('post:deleted', onDeleted);
+    return () => window.removeEventListener('post:deleted', onDeleted);
+  }, []);
+
   if (!user) {
     return <div>Loading...</div>;
   }

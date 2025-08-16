@@ -8,7 +8,8 @@ const BASE_URL = `${API_BASE_URL}/api`;
 // Create axios instance with default configuration
 const apiClient = axios.create({
     baseURL: BASE_URL,
-    timeout: 10000,
+    // Give more room for slower networks and media endpoints; individual calls can override
+    timeout: 25000,
     headers: {
         "Content-Type": "application/json",
     },
@@ -139,6 +140,8 @@ export const postsAPI = {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
+                // Allow longer time for media uploads
+                timeout: 60000,
             });
             return response.data;
         } catch (error) {
