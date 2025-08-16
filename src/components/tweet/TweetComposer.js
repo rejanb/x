@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useTweets } from "../../context/TweetContext";
+import { pollsAPI } from "../../services/api";
 import "./TweetComposer.css";
 
 const TweetComposer = () => {
@@ -11,6 +12,7 @@ const TweetComposer = () => {
   const [pollOptions, setPollOptions] = useState(["", ""]);
   const [pollDuration, setPollDuration] = useState(1440); // 24 hours in minutes
   const [showHashtagSuggestions, setShowHashtagSuggestions] = useState(false);
+  const [pollQuestion, setPollQuestion] = useState("");
   const { user } = useAuth();
   const { addTweet } = useTweets();
 
@@ -19,48 +21,71 @@ const TweetComposer = () => {
 
     if (!content.trim() || isSubmitting) return;
 
+    // If creating a poll, validate poll data
+    if (showPollCreator) {
+      if (!pollQuestion.trim()) {
+        alert("Please enter a poll question");
+        return;
+      }
+      
+      const validOptions = pollOptions.filter((option) => option.trim());
+      if (validOptions.length < 2) {
+        alert("Please provide at least 2 poll options");
+        return;
+      }
+    }
+
     setIsSubmitting(true);
 
     try {
-      const tweetData = {
-        content: content.trim(),
-        author: {
-          id: user.id,
-          username: user.username,
-          displayName: user.displayName || user.username,
-          profilePicture: user.profilePicture,
-        },
-        images: selectedImages,
-      };
-
-      // Add poll data if poll is created
-      if (
-        showPollCreator &&
-        pollOptions.filter((option) => option.trim()).length >= 2
-      ) {
-        tweetData.poll = {
-          options: pollOptions
-            .filter((option) => option.trim())
-            .map((option) => ({
-              text: option.trim(),
-              votes: 0,
-              voters: [],
-            })),
-          duration: pollDuration,
-          endTime: new Date(
-            Date.now() + pollDuration * 60 * 1000
-          ).toISOString(),
-          totalVotes: 0,
+      // If creating a poll, create it via the polls API (which automatically creates a post)
+      if (showPollCreator && pollQuestion.trim() && pollOptions.filter((option) => option.trim()).length >= 2) {
+        const pollData = {
+          question: pollQuestion.trim(),
+          options: pollOptions.filter((option) => option.trim()),
+          expiresAt: new Date(Date.now() + pollDuration * 60 * 1000).toISOString(),
+          userId: user.id,
+          postContent: content.trim(),
+          hashtags: extractHashtags(content)
         };
+
+        try {
+          const createdPoll = await pollsAPI.createPoll(pollData);
+          console.log("Poll created successfully:", createdPoll);
+          
+          // Reset poll form
+          setPollQuestion("");
+          setPollOptions(["", ""]);
+          setPollDuration(1440);
+          setShowPollCreator(false);
+          setContent("");
+          setSelectedImages([]);
+          
+          // Refresh the feed to show the new poll post
+          // You might want to add a callback here to refresh the parent component
+          alert("Poll created successfully! The post with your poll has been created.");
+        } catch (pollError) {
+          console.error("Error creating poll:", pollError);
+          alert("Failed to create poll. Please try again.");
+        }
+      } else {
+        // Create a regular tweet/post (without poll)
+        const tweetData = {
+          content: content.trim(),
+          author: {
+            id: user.id,
+            username: user.username,
+            displayName: user.displayName || user.username,
+            profilePicture: user.profilePicture,
+          },
+          images: selectedImages,
+        };
+
+        addTweet(tweetData);
+
+        setContent("");
+        setSelectedImages([]);
       }
-
-      addTweet(tweetData);
-
-      setContent("");
-      setSelectedImages([]);
-      setShowPollCreator(false);
-      setPollOptions(["", ""]);
-      setPollDuration(1440);
     } catch (error) {
       console.error("Error posting tweet:", error);
     }
@@ -108,6 +133,7 @@ const TweetComposer = () => {
     setShowPollCreator(!showPollCreator);
     if (!showPollCreator) {
       // Reset poll when hiding
+      setPollQuestion("");
       setPollOptions(["", ""]);
       setPollDuration(1440);
     }
@@ -158,6 +184,13 @@ const TweetComposer = () => {
     wordsArray[wordsArray.length - 1] = hashtag;
     setContent(wordsArray.join(" ") + " ");
     setShowHashtagSuggestions(false);
+  };
+
+  // Helper function to extract hashtags from content
+  const extractHashtags = (text) => {
+    const hashtagRegex = /#[\w]+/g;
+    const matches = text.match(hashtagRegex);
+    return matches ? matches.map(tag => tag.slice(1)) : [];
   };
 
   const maxLength = 280;
@@ -236,6 +269,17 @@ const TweetComposer = () => {
                 >
                   ✕
                 </button>
+              </div>
+
+              <div className="poll-question-input">
+                <input
+                  type="text"
+                  value={pollQuestion}
+                  onChange={(e) => setPollQuestion(e.target.value)}
+                  placeholder="Ask a question..."
+                  maxLength={100}
+                  className="poll-question-field"
+                />
               </div>
 
               <div className="poll-options">

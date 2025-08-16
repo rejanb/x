@@ -55,23 +55,93 @@
   font-size: 15px;
 }
 
-.delete-button {
+.edited-indicator {
+  color: #657786;
+  font-style: italic;
+  font-size: 14px;
+}
+
+.tweet-actions-owner {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.more-options {
+  position: relative;
+}
+
+.more-options-button {
   background-color: transparent;
   color: #657786;
   border: none;
-  padding: 4px;
+  padding: 8px;
   border-radius: 50%;
   font-size: 16px;
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
+  cursor: pointer;
 }
 
-.delete-button:hover {
-  background-color: rgba(224, 36, 94, 0.1);
+.more-options-button:hover {
+  background-color: rgba(29, 155, 240, 0.1);
+  color: #1da1f2;
+}
+
+.more-options-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.more-options-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid #e1e8ed;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 160px;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-size: 14px;
+  color: #14171a;
+}
+
+.menu-item:hover {
+  background-color: #f7f9fa;
+}
+
+.menu-item:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.menu-item svg {
+  color: #657786;
+}
+
+.edit-item:hover svg {
+  color: #1da1f2;
+}
+
+.delete-item:hover svg {
   color: #e0245e;
 }
 
@@ -171,6 +241,19 @@
   fill: #00ba7c;
 }
 
+.retweet-button.retweeted {
+  color: #00ba7c;
+}
+
+.retweet-button.retweeted svg {
+  fill: #00ba7c;
+}
+
+.retweet-button.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
 .like-button:hover {
   background-color: rgba(224, 36, 94, 0.1);
   color: #e0245e;
@@ -188,6 +271,33 @@
   fill: #e0245e;
 }
 
+.like-btn.liked {
+  color: #e0245e;
+}
+
+.like-btn.liked svg path {
+  fill: #e0245e;
+}
+
+.like-btn.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.loading-spinner-small {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #e1e8ed;
+  border-top: 2px solid #1da1f2;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 @media (max-width: 768px) {
   .tweet-card {
     padding: 12px 16px;
@@ -199,5 +309,15 @@
 
   .tweet-actions {
     margin-left: 0;
+  }
+
+  .more-options-menu {
+    right: -8px;
+    min-width: 140px;
+  }
+
+  .menu-item {
+    padding: 10px 14px;
+    font-size: 13px;
   }
 }

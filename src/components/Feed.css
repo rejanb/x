@@ -19,81 +19,6 @@
   gap: 8px;
 }
 
-.backend-status {
-  font-size: 12px;
-  font-weight: 500;
-  padding: 4px 8px;
-  border-radius: 12px;
-  background: #f7f9fa;
-}
-
-.websocket-status {
-  font-size: 12px;
-  font-weight: 500;
-  padding: 4px 8px;
-  border-radius: 12px;
-  background: #f7f9fa;
-}
-
-.websocket-status.connected {
-  color: #17bf63;
-  background: #e8f5e8;
-}
-
-.websocket-status.disconnected {
-  color: #f4212e;
-  background: #ffe8e8;
-}
-
-.new-posts-indicator {
-  background: #1da1f2;
-  color: white;
-  padding: 8px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  animation: pulse 2s infinite;
-}
-
-.new-posts-indicator:hover {
-  background: #1991db;
-  transform: scale(1.05);
-}
-
-@keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(29, 161, 242, 0.7);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(29, 161, 242, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(29, 161, 242, 0);
-  }
-}
-
-.backend-status.connected {
-  color: #17bf63;
-  background: #e8f5e8;
-}
-
-.backend-status.disconnected {
-  color: #f4212e;
-  background: #ffe8e8;
-}
-
-.backend-status.error {
-  color: #f59b42;
-  background: #fff3e8;
-}
-
-.backend-status.checking {
-  color: #536471;
-  background: #f7f9fa;
-}
-
 .feed-header h2 {
   margin: 0;
   color: #0f1419;
@@ -101,33 +26,65 @@
   font-weight: 700;
 }
 
-.header-buttons {
+/* Error States */
+.feed-error {
+  max-width: 600px;
+  margin: 40px auto;
+  padding: 24px;
+  background: #fff5f5;
+  border: 1px solid #fed7d7;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.feed-error h3 {
+  margin: 0 0 16px 0;
+  color: #c53030;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.feed-error p {
+  margin: 0 0 20px 0;
+  color: #742a2a;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.error-actions {
   display: flex;
   gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
-.test-api-btn,
-.test-post-btn {
+.retry-btn, .dismiss-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.retry-btn {
   background: #1da1f2;
   color: white;
-  border: none;
-  border-radius: 20px;
-  padding: 8px 16px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background-color 0.2s;
 }
 
-.test-post-btn {
-  background: #17bf63;
-}
-
-.test-post-btn:hover {
-  background: #15a853;
-}
-
-.test-api-btn:hover {
+.retry-btn:hover {
   background: #1991db;
+  transform: translateY(-1px);
+}
+
+.dismiss-btn {
+  background: #e1e8ed;
+  color: #536471;
+}
+
+.dismiss-btn:hover {
+  background: #cbd5e0;
 }
 
 .posts-container {

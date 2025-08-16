@@ -52,23 +52,88 @@
   color: #657786;
 }
 
-.delete-button {
+.tweet-actions-owner {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.more-options {
+  position: relative;
+}
+
+.more-options-button {
+  background-color: transparent;
+  color: #657786;
+  border: none;
+  padding: 8px;
+  border-radius: 50%;
+  font-size: 16px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: none;
-  border: none;
-  color: #657786;
-  cursor: pointer;
   transition: all 0.2s ease;
+  cursor: pointer;
 }
 
-.delete-button:hover {
-  background-color: rgba(244, 33, 46, 0.1);
-  color: #f4212e;
+.more-options-button:hover {
+  background-color: rgba(29, 155, 240, 0.1);
+  color: #1da1f2;
+}
+
+.more-options-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.more-options-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid #e1e8ed;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 160px;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-size: 14px;
+  color: #14171a;
+}
+
+.menu-item:hover {
+  background-color: #f7f9fa;
+}
+
+.menu-item:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.menu-item svg {
+  color: #657786;
+}
+
+.edit-item:hover svg {
+  color: #1da1f2;
+}
+
+.delete-item:hover svg {
+  color: #e0245e;
 }
 
 .tweet-content {
@@ -117,10 +182,17 @@
 }
 
 .tweet-timestamp {
+  color: #657786;
+  font-size: 14px;
   padding: 16px 0;
   border-bottom: 1px solid #e1e8ed;
-  font-size: 15px;
+  border-top: 1px solid #e1e8ed;
+}
+
+.edited-indicator {
   color: #657786;
+  font-style: italic;
+  font-size: 13px;
 }
 
 .tweet-stats {
@@ -236,5 +308,15 @@
   .action-button svg {
     width: 18px;
     height: 18px;
+  }
+
+  .more-options-menu {
+    right: -8px;
+    min-width: 140px;
+  }
+
+  .menu-item {
+    padding: 10px 14px;
+    font-size: 13px;
   }
 }

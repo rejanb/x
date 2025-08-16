@@ -1,28 +1,29 @@
 import React from "react";
 import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
+    Navigate,
+    Route,
+    BrowserRouter as Router,
+    Routes,
 } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";
-import { TweetProvider } from "./context/TweetContext";
-import { RealTimeProvider } from "./context/RealTimeContext";
-import PublicRoute from "./components/common/PublicRoute";
-import PrivateRoute from "./components/common/PrivateRoute";
-import Layout from "./components/common/Layout";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Home from "./pages/Home";
-import Profile from "./pages/Profile";
-import Explore from "./pages/Explore";
-import Notifications from "./pages/Notifications";
-import TweetDetail from "./pages/TweetDetail";
-import Messages from "./pages/Messages";
-import Bookmarks from "./pages/Bookmarks";
-import EditProfile from "./pages/EditProfile";
-import ChangePassword from "./pages/ChangePassword";
 import "./App.css";
+import Layout from "./components/common/Layout";
+import PrivateRoute from "./components/common/PrivateRoute";
+import PublicRoute from "./components/common/PublicRoute";
+import { AuthProvider } from "./context/AuthContext";
+import { RealTimeProvider } from "./context/RealTimeContext";
+import { TweetProvider } from "./context/TweetContext";
+import Bookmarks from "./pages/Bookmarks";
+import ChangePassword from "./pages/ChangePassword";
+import EditProfile from "./pages/EditProfile";
+import Explore from "./pages/Explore";
+import Home from "./pages/Home";
+import Login from "./pages/Login";
+import Messages from "./pages/Messages";
+import Notifications from "./pages/Notifications";
+import PollTest from "./pages/PollTest";
+import Profile from "./pages/Profile";
+import Register from "./pages/Register";
+import TweetDetail from "./pages/TweetDetail";
 
 function App() {
   return (
@@ -50,6 +51,7 @@ function App() {
                     <Route path="/messages" element={<Messages />} />
                     <Route path="/bookmarks" element={<Bookmarks />} />
                     <Route path="/change-password" element={<ChangePassword />} />
+                    <Route path="/poll-test" element={<PollTest />} />
                   </Route>
                 </Route>
 

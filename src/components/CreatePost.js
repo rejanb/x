@@ -1,17 +1,18 @@
 import React, { useRef, useState } from 'react';
-import { postsAPI } from '../services/api';
-import { useRealTime } from '../context/RealTimeContext';
 import { useAuth } from '../context/AuthContext';
+import { useTweets } from '../context/TweetContext';
+import { pollsAPI, postsAPI } from '../services/api';
 import './CreatePost.css';
 
 const CreatePost = ({ onPostCreated }) => {
-  const { showTestNotification } = useRealTime();
   const { user } = useAuth();
+  const { loadTweets } = useTweets();
   const [content, setContent] = useState('');
   const [files, setFiles] = useState([]);
   const [isPoll, setIsPoll] = useState(false);
   const [pollQuestion, setPollQuestion] = useState('');
   const [pollOptions, setPollOptions] = useState(['', '']);
+  const [pollDuration, setPollDuration] = useState(1440); // 24 hours in minutes
   const [isLoading, setIsLoading] = useState(false);
   const [showPollForm, setShowPollForm] = useState(false);
   
@@ -66,6 +67,7 @@ const CreatePost = ({ onPostCreated }) => {
       setIsPoll(false);
       setPollQuestion('');
       setPollOptions(['', '']);
+      setPollDuration(1440);
     } else {
       setIsPoll(true);
       setShowPollForm(true);
@@ -100,96 +102,99 @@ const CreatePost = ({ onPostCreated }) => {
       return;
     }
 
+    // Validate poll data if creating a poll
+    if (isPoll && showPollForm) {
+      if (!pollQuestion.trim()) {
+        alert('Please enter a poll question');
+        return;
+      }
+      
+      const validOptions = pollOptions.filter(option => option.trim());
+      if (validOptions.length < 2) {
+        alert('Please provide at least 2 poll options');
+        return;
+      }
+    }
+
     setIsLoading(true);
 
     try {
-      let result;
-      const hashtags = extractHashtags(content);
-      const mentions = extractMentions(content);
-      
-      // Clean content (remove hashtags and mentions for cleaner text)
-      const cleanContent = content
-        .replace(/#[\w\u0590-\u05ff]+/g, '')
-        .replace(/@[\w\u0590-\u05ff]+/g, '')
-        .trim();
-
-      if (isPoll && showPollForm) {
-        // Create poll post
+      // If creating a poll, use the polls API (which automatically creates a post)
+      if (isPoll && showPollForm && pollQuestion.trim() && pollOptions.filter(option => option.trim()).length >= 2) {
         const pollData = {
-          question: pollQuestion,
-          options: pollOptions.filter(opt => opt.trim() !== ''),
-          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-          userId: user?.id // Use actual user ID
+          question: pollQuestion.trim(),
+          options: pollOptions.filter(option => option.trim()),
+          expiresAt: new Date(Date.now() + pollDuration * 60 * 1000).toISOString(),
+          userId: user.id,
+          postContent: content.trim(),
+          hashtags: extractHashtags(content).map(tag => tag.slice(1)) // Remove # from hashtags
         };
 
-        console.log('🔍 Creating poll post:', { content: cleanContent, pollData });
-        
-        // For now, create post with poll data embedded
-        const postData = {
-          content: cleanContent || pollQuestion,
-          authorId: user?.id, // Use actual user ID
-          hashtags: hashtags.map(tag => tag.slice(1)), // Remove # symbol
-          mentions: mentions.map(mention => mention.slice(1)), // Remove @ symbol
-          poll: pollData
-        };
-
-        result = await postsAPI.createPost(postData);
-        console.log('✅ Poll post created:', result);
+        try {
+          const createdPoll = await pollsAPI.createPoll(pollData);
+          console.log('✅ Poll created successfully:', createdPoll);
+          
+          // Reset form
+          setContent('');
+          setFiles([]);
+          setPollQuestion('');
+          setPollOptions(['', '']);
+          setPollDuration(1440);
+          setIsPoll(false);
+          setShowPollForm(false);
+          
+          // Refresh tweets to show the new post
+          await loadTweets(1, false);
+          
+          // Notify parent component
+          if (onPostCreated) {
+            onPostCreated();
+          }
+          
+          alert('Poll created successfully! The post with your poll has been created.');
+        } catch (pollError) {
+          console.error('❌ Error creating poll:', pollError);
+          alert('Failed to create poll. Please try again.');
+        }
       } else {
-        // Create normal post or post with media
+        // Create regular post (without poll)
+        const cleanContent = content.trim();
+        const hashtags = extractHashtags(cleanContent);
+        const mentions = extractMentions(cleanContent);
+        
+        console.log('🔍 Creating regular post:', { content: cleanContent, hashtags, mentions });
+        
+        const postData = {
+          content: cleanContent,
+          authorId: user.id,
+          hashtags: hashtags.map(tag => tag.slice(1)), // Remove # from hashtags
+          mentions: mentions.map(mention => mention.slice(1)), // Remove @ from mentions
+        };
+
+        let result;
         if (files.length > 0) {
-          // Post with media
-          const postData = {
-            content: cleanContent,
-            authorId: user?.id, // Use actual user ID
-            hashtags: hashtags.map(tag => tag.slice(1)),
-            mentions: mentions.map(mention => mention.slice(1))
-          };
-
-          console.log('🔍 Creating post with media:', postData, 'Files:', files);
           result = await postsAPI.createPostWithMedia(postData, files);
-          console.log('✅ Post with media created:', result);
         } else {
-          // Text-only post
-          const postData = {
-            content: cleanContent,
-            authorId: user?.id, // Use actual user ID
-            hashtags: hashtags.map(tag => tag.slice(1)),
-            mentions: mentions.map(mention => mention.slice(1))
-          };
-
-          console.log('🔍 Creating text post:', postData);
           result = await postsAPI.createPost(postData);
-          console.log('✅ Text post created:', result);
+        }
+
+        console.log('✅ Post created:', result);
+        
+        // Reset form
+        setContent('');
+        setFiles([]);
+        
+        // Refresh tweets to show the new post
+        await loadTweets(1, false);
+        
+        // Notify parent component
+        if (onPostCreated) {
+          onPostCreated();
         }
       }
-
-      // Reset form
-      setContent('');
-      setFiles([]);
-      setIsPoll(false);
-      setShowPollForm(false);
-      setPollQuestion('');
-      setPollOptions(['', '']);
-
-      // Notify parent component
-      if (onPostCreated && result) {
-        onPostCreated(result);
-      }
-
-      // Show notification for successful post creation
-      if (showTestNotification && result) {
-        const postContent = result.content || content;
-        showTestNotification('post', `You posted: "${postContent.substring(0, 50)}${postContent.length > 50 ? '...' : ''}"`);
-      }
-
-      // Show success message
-      console.log('✅ Post created successfully!');
-      // Removed alert to avoid interrupting the flow
-
     } catch (error) {
       console.error('❌ Error creating post:', error);
-      alert('Failed to create post: ' + (error.message || 'Unknown error'));
+      alert('Failed to create post. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -280,6 +285,25 @@ const CreatePost = ({ onPostCreated }) => {
                     + Add option
                   </button>
                 )}
+              </div>
+              
+              <div className="poll-duration">
+                <label htmlFor="poll-duration">Poll duration:</label>
+                <select
+                  id="poll-duration"
+                  value={pollDuration}
+                  onChange={(e) => setPollDuration(parseInt(e.target.value))}
+                >
+                  <option value={5}>5 minutes</option>
+                  <option value={15}>15 minutes</option>
+                  <option value={30}>30 minutes</option>
+                  <option value={60}>1 hour</option>
+                  <option value={240}>4 hours</option>
+                  <option value={480}>8 hours</option>
+                  <option value={1440}>1 day</option>
+                  <option value={4320}>3 days</option>
+                  <option value={10080}>7 days</option>
+                </select>
               </div>
             </div>
           )}

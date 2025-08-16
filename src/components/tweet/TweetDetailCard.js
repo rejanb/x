@@ -1,23 +1,59 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useTweets } from "../../context/TweetContext";
 import { useConfirmationDialog } from "../../hooks/useConfirmationDialog";
-import Poll from "./Poll";
-import HashtagText from "../common/HashtagText";
 import ConfirmationDialog from "../common/ConfirmationDialog";
+import HashtagText from "../common/HashtagText";
+import EditPost from "../EditPost";
+import Poll from "./Poll";
 import "./TweetDetailCard.css";
 
 const TweetDetailCard = ({ tweet }) => {
   const { user } = useAuth();
   const { toggleLike, toggleRetweet, deleteTweet } = useTweets();
   const { isOpen, dialogConfig, showConfirmation } = useConfirmationDialog();
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [showMoreOptions, setShowMoreOptions] = useState(false);
+  const moreOptionsRef = useRef(null);
+
+  // Determine if current user has liked this post
+  const isLiked = user && tweet?.likes && Array.isArray(tweet.likes) && tweet.likes.includes(user.id);
+  const likeCount = tweet?.likes && Array.isArray(tweet.likes) ? tweet.likes.length : 0;
+  
+  // Determine if current user has retweeted this post
+  const isRetweeted = user && tweet?.retweets && Array.isArray(tweet.retweets) && tweet.retweets.includes(user.id);
+  const retweetCount = tweet?.retweets && Array.isArray(tweet.retweets) ? tweet.retweets.length : 0;
+  
+  // Handle reply count
+  const replyCount = tweet?.replies && Array.isArray(tweet.replies) ? tweet.replies.length : 0;
 
   const handleLike = () => {
-    toggleLike(tweet.id, tweet.liked);
+    toggleLike(tweet.id, isLiked);
   };
 
-  const handleRetweet = () => {
-    toggleRetweet(tweet.id, tweet.retweeted);
+  const handleRetweet = async () => {
+    if (tweet.id) {
+      try {
+        await toggleRetweet(tweet.id, isRetweeted);
+      } catch (error) {
+        console.error('Error handling retweet:', error);
+      }
+    }
+  };
+
+  const handleEdit = () => {
+    setShowEditModal(true);
+    setShowMoreOptions(false); // Close menu after clicking edit
+  };
+
+  const handleEditClose = () => {
+    setShowEditModal(false);
+  };
+
+  const handleEditSave = (updatedData) => {
+    // The context has already updated the tweet, so we just close the modal
+    setShowEditModal(false);
   };
 
   const handleDelete = async () => {
@@ -31,9 +67,34 @@ const TweetDetailCard = ({ tweet }) => {
     });
 
     if (confirmed) {
-      deleteTweet(tweet.id);
+      setDeleteLoading(true);
+      setShowMoreOptions(false); // Close menu after confirming delete
+      try {
+        await deleteTweet(tweet.id);
+      } catch (error) {
+        console.error('Error deleting tweet:', error);
+      } finally {
+        setDeleteLoading(false);
+      }
     }
   };
+
+  // Handle clicks outside more options menu
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (moreOptionsRef.current && !moreOptionsRef.current.contains(event.target)) {
+        setShowMoreOptions(false);
+      }
+    };
+
+    if (showMoreOptions) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showMoreOptions]);
 
   const formatFullDate = (timestamp) => {
     const date = new Date(timestamp);
@@ -88,16 +149,50 @@ const TweetDetailCard = ({ tweet }) => {
         </div>
 
         {isOwner && (
-          <button
-            onClick={handleDelete}
-            className="delete-button"
-            title="Delete post"
-          >
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-              <path d="M16 6V4.5C16 3.12 14.88 2 13.5 2h-3C9.11 2 8 3.12 8 4.5V6H3v2h2v10.5C5 19.88 6.12 21 7.5 21h9c1.38 0 2.5-1.12 2.5-2.5V8h2V6h-5zM10 4.5c0-.28.22-.5.5-.5h3c.28 0 .5.22.5.5V6h-4V4.5zM17 18.5c0 .28-.22.5-.5.5h-9c-.28 0-.5-.22-.5-.5V8h10v10.5z" />
-              <path d="M9 10v6h2v-6H9zm4 0v6h2v-6h-2z" />
-            </svg>
-          </button>
+          <div className="tweet-actions-owner">
+            <div className="more-options" ref={moreOptionsRef}>
+              <button
+                onClick={() => setShowMoreOptions(!showMoreOptions)}
+                className="more-options-button"
+                title="More options"
+                disabled={deleteLoading}
+              >
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                  <path d="M12 18c1.657 0 3 1.343 3 3s-1.343 3-3 3-3-1.343-3-3 1.343-3 3-3zm0-9c1.657 0 3 1.343 3 3s-1.343 3-3 3-3-1.343-3-3 1.343-3 3-3zm0-9c1.657 0 3 1.343 3 3s-1.343 3-3 3-3-1.343-3-3 1.343-3 3-3z"/>
+                </svg>
+              </button>
+              
+              {showMoreOptions && (
+                <div className="more-options-menu">
+                  <button
+                    onClick={handleEdit}
+                    className="menu-item edit-item"
+                    disabled={deleteLoading}
+                  >
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                      <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                    </svg>
+                    <span>Edit</span>
+                  </button>
+                  
+                  <button
+                    onClick={handleDelete}
+                    className="menu-item delete-item"
+                    disabled={deleteLoading}
+                  >
+                    {deleteLoading ? (
+                      <div className="loading-spinner-small"></div>
+                    ) : (
+                      <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                      </svg>
+                    )}
+                    <span>Delete</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         )}
       </div>
 
@@ -122,19 +217,22 @@ const TweetDetailCard = ({ tweet }) => {
         {tweet.poll && <Poll poll={tweet.poll} tweetId={tweet.id} />}
       </div>
 
-      <div className="tweet-timestamp">{formatFullDate(tweet.createdAt)}</div>
+      <div className="tweet-timestamp">
+        {formatFullDate(tweet.createdAt)}
+        {tweet.isEdited && <span className="edited-indicator"> · edited</span>}
+      </div>
 
       <div className="tweet-stats">
         <div className="stat-item">
-          <span className="stat-number">{tweet.retweets || 0}</span>
+          <span className="stat-number">{retweetCount}</span>
           <span className="stat-label">Retweets</span>
         </div>
         <div className="stat-item">
-          <span className="stat-number">{tweet.likes || 0}</span>
+          <span className="stat-number">{likeCount}</span>
           <span className="stat-label">Likes</span>
         </div>
         <div className="stat-item">
-          <span className="stat-number">{tweet.replies || 0}</span>
+          <span className="stat-number">{replyCount}</span>
           <span className="stat-label">Replies</span>
         </div>
       </div>
@@ -148,7 +246,7 @@ const TweetDetailCard = ({ tweet }) => {
 
         <button
           className={`action-button retweet-button ${
-            tweet.retweeted ? "retweeted" : ""
+            isRetweeted ? "retweeted" : ""
           }`}
           onClick={handleRetweet}
         >
@@ -158,7 +256,7 @@ const TweetDetailCard = ({ tweet }) => {
         </button>
 
         <button
-          className={`action-button like-button ${tweet.liked ? "liked" : ""}`}
+          className={`action-button like-button ${isLiked ? "liked" : ""}`}
           onClick={handleLike}
         >
           <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
@@ -177,6 +275,14 @@ const TweetDetailCard = ({ tweet }) => {
         onConfirm={dialogConfig.onConfirm}
         onCancel={dialogConfig.onCancel}
       />
+
+      {showEditModal && (
+        <EditPost
+          post={tweet}
+          onClose={handleEditClose}
+          onSave={handleEditSave}
+        />
+      )}
     </div>
   );
 };

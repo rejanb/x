@@ -164,6 +164,36 @@
   background: #1991db;
 }
 
+.poll-duration {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e1e8ed;
+}
+
+.poll-duration label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #536471;
+  margin-bottom: 8px;
+}
+
+.poll-duration select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #e1e8ed;
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+  outline: none;
+}
+
+.poll-duration select:focus {
+  border-color: #1da1f2;
+  box-shadow: 0 0 0 2px rgba(29, 161, 242, 0.2);
+}
+
 /* Post actions */
 .post-actions {
   display: flex;

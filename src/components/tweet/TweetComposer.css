@@ -145,6 +145,31 @@
   color: #1d9bf0;
 }
 
+.poll-question-input {
+  margin-bottom: 16px;
+}
+
+.poll-question-field {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #e1e8ed;
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+  font-weight: 500;
+}
+
+.poll-question-field:focus {
+  outline: none;
+  border-color: #1d9bf0;
+  box-shadow: 0 0 0 2px rgba(29, 155, 240, 0.1);
+}
+
+.poll-question-field::placeholder {
+  color: #657786;
+  font-weight: 400;
+}
+
 .close-poll {
   background: none;
   border: none;

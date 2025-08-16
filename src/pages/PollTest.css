@@ -1,0 +1,242 @@
+.poll-test-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+}
+
+.poll-test-container {
+  max-width: 800px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.poll-test-container h1 {
+  text-align: center;
+  color: #1a1a1a;
+  margin-bottom: 8px;
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.poll-test-container > p {
+  text-align: center;
+  color: #666;
+  margin-bottom: 32px;
+  font-size: 1.1rem;
+}
+
+.login-required {
+  text-align: center;
+  padding: 40px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 2px dashed #dee2e6;
+}
+
+.login-required p {
+  color: #6c757d;
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.poll-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.form-group input,
+.form-group textarea {
+  padding: 12px 16px;
+  border: 2px solid #e1e8ed;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #1da1f2;
+  box-shadow: 0 0 0 3px rgba(29, 161, 242, 0.1);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
+}
+
+.option-input {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.option-input input {
+  flex: 1;
+}
+
+.remove-option-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+}
+
+.remove-option-btn:hover {
+  background: #c82333;
+}
+
+.add-option-btn {
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+  align-self: flex-start;
+}
+
+.add-option-btn:hover {
+  background: #218838;
+}
+
+.error-message {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid #f5c6cb;
+  font-size: 0.9rem;
+}
+
+.submit-btn {
+  background: #1da1f2;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 16px 32px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 16px;
+}
+
+.submit-btn:hover:not(:disabled) {
+  background: #1991db;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(29, 161, 242, 0.3);
+}
+
+.submit-btn:disabled {
+  background: #a8dadc;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.success-message {
+  margin-top: 32px;
+  padding: 24px;
+  background: #d4edda;
+  border: 1px solid #c3e6cb;
+  border-radius: 12px;
+  color: #155724;
+}
+
+.success-message h3 {
+  margin: 0 0 16px 0;
+  color: #155724;
+  font-size: 1.3rem;
+}
+
+.poll-details {
+  background: white;
+  padding: 16px;
+  border-radius: 8px;
+  margin: 16px 0;
+  border: 1px solid #c3e6cb;
+}
+
+.poll-details p {
+  margin: 8px 0;
+  font-size: 0.95rem;
+}
+
+.poll-details strong {
+  color: #0f5132;
+}
+
+.note {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  padding: 12px;
+  border-radius: 8px;
+  margin: 16px 0 0 0;
+  color: #856404;
+  font-size: 0.9rem;
+}
+
+.note strong {
+  color: #856404;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .poll-test-page {
+    padding: 16px;
+  }
+  
+  .poll-test-container {
+    padding: 24px;
+    border-radius: 12px;
+  }
+  
+  .poll-test-container h1 {
+    font-size: 2rem;
+  }
+  
+  .option-input {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  
+  .remove-option-btn {
+    align-self: flex-end;
+  }
+  
+  .add-option-btn {
+    align-self: stretch;
+    text-align: center;
+  }
+}

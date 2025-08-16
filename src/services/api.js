@@ -176,11 +176,43 @@ export const postsAPI = {
         }
     },
 
-    // Retweet post
-    retweet: async (postId) => {
+    // Like/Unlike post with user context
+    likeTweet: async (postId, isLiked, userId) => {
         try {
-            const response = await apiClient.post(`/posts/${postId}/retweet`);
-            return response.data;
+            if (isLiked) {
+                // Unlike the post
+                const response = await apiClient.delete(`/posts/${postId}/like`, {
+                    data: { userId }
+                });
+                return response.data;
+            } else {
+                // Like the post
+                const response = await apiClient.post(`/posts/${postId}/like`, {
+                    userId
+                });
+                return response.data;
+            }
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    // Retweet/Unretweet post with user context
+    retweetPost: async (postId, isRetweeted, userId) => {
+        try {
+            if (isRetweeted) {
+                // Remove retweet
+                const response = await apiClient.delete(`/posts/${postId}/retweet`, {
+                    data: { userId }
+                });
+                return response.data;
+            } else {
+                // Retweet the post
+                const response = await apiClient.post(`/posts/${postId}/retweet`, {
+                    userId
+                });
+                return response.data;
+            }
         } catch (error) {
             throw error.response?.data || error.message;
         }
@@ -220,6 +252,26 @@ export const postsAPI = {
                 `/posts/liked?userId=${encodeURIComponent(userId)}&page=${page}&limit=${limit}`
             );
             return response.data; // { posts, total, page, limit }
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    // Edit post
+    editPost: async (postId, postData) => {
+        try {
+            const response = await apiClient.put(`/posts/${postId}`, postData);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    // Delete post
+    deletePost: async (postId) => {
+        try {
+            const response = await apiClient.delete(`/posts/${postId}`);
+            return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
         }
