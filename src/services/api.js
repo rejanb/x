@@ -164,6 +164,14 @@ export const postsAPI = {
             throw error.response?.data || error.message;
         }
     },
+    getTrendingHashtags: async () => {
+        try {
+            const response = await apiClient.get("/posts/trending/hashtags?limit=10");
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
 };
 
 // Comments API functions
